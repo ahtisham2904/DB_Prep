@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DBMS Final — Visual Master Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c1b2a;        /* deep navy */
+    --ink-2:#13283d;
+    --paper:#f6f8fa;      /* content bg */
+    --card:#ffffff;
+    --line:#dde5ec;
+    --text:#1b2a3a;
+    --muted:#5d7186;
+    --teal:#0ea5a5;       /* query accent */
+    --teal-d:#0a6e6e;
+    --teal-soft:#e3f4f4;
+    --amber:#e08a1e;      /* trap/warning */
+    --amber-soft:#fdf1df;
+    --gold:#c6912b;       /* PK */
+    --violet:#6b5bd2;     /* FK accent */
+    --rad:14px;
+    --maxw:1180px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--paper);color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;line-height:1.62;font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;line-height:1.18;color:var(--ink);font-weight:600}
+  code,pre,.mono{font-family:'JetBrains Mono',monospace}
+  a{color:var(--teal-d)}
+
+  /* ---------- Layout ---------- */
+  .shell{display:grid;grid-template-columns:280px 1fr;margin:0 auto;gap:0}
+  .toc{
+    position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+    background:var(--ink);color:#cfe0ee;padding:26px 20px 60px;
+  }
+  .toc .brand{font-family:'Space Grotesk';font-weight:700;color:#fff;font-size:18px;letter-spacing:.3px;margin-bottom:4px}
+  .toc .sub{font-size:12px;color:#7fa0bd;margin-bottom:22px;letter-spacing:.4px;text-transform:uppercase}
+  .toc a{display:block;color:#a9c2d8;text-decoration:none;font-size:13.5px;padding:7px 11px;border-radius:8px;margin:1px 0;border-left:2px solid transparent;transition:.18s}
+  .toc a .n{color:var(--teal);font-family:'JetBrains Mono';font-size:11px;margin-right:8px}
+  .toc a:hover{background:#13283d;color:#fff}
+  .toc a.active{background:#13283d;color:#fff;border-left-color:var(--teal)}
+  .toc .grp{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#5e7e9c;margin:18px 0 4px 11px}
+
+  main{padding:0 clamp(18px,4vw,56px) 90px;min-width:0}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:64px 0 40px;border-bottom:1px solid var(--line)}
+  .hero .eyebrow{font-family:'JetBrains Mono';font-size:12.5px;letter-spacing:2px;text-transform:uppercase;color:var(--teal-d)}
+  .hero h1{font-size:clamp(34px,5vw,52px);margin:14px 0 10px;font-weight:700;letter-spacing:-1px}
+  .hero p{font-size:18px;color:var(--muted);max-width:62ch;margin:0}
+  .hero .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--ink);font-weight:500}
+  .chip b{color:var(--teal-d)}
+
+  /* ---------- Sections ---------- */
+  section{padding:48px 0;border-bottom:1px solid var(--line);scroll-margin-top:14px}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px}
+  .sec-head .num{font-family:'JetBrains Mono';font-size:14px;font-weight:700;color:#fff;background:var(--teal-d);border-radius:8px;padding:5px 10px;flex:none}
+  .sec-head h2{font-size:clamp(24px,3.2vw,32px);margin:0}
+  .lead{color:var(--muted);font-size:16.5px;max-width:72ch;margin:6px 0 26px}
+  h3{font-size:19px;margin:34px 0 10px}
+  h4{font-size:15px;margin:20px 0 8px;color:var(--ink-2)}
+  p{margin:0 0 14px}
+  ul{margin:0 0 16px;padding-left:20px}
+  li{margin:5px 0}
+  .kbd,.tok{font-family:'JetBrains Mono';background:#eef3f7;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:13px;color:var(--ink-2)}
+
+  /* ---------- Code blocks ---------- */
+  pre{background:var(--ink);color:#dde9f3;border-radius:var(--rad);padding:18px 20px;overflow-x:auto;margin:14px 0;font-size:13.5px;line-height:1.6;border:1px solid #0a1622;box-shadow:0 6px 22px rgba(12,27,42,.10)}
+  pre code{font-family:'JetBrains Mono';white-space:pre}
+  .c-kw{color:#5ad0c8;font-weight:600}
+  .c-fn{color:#f0b860;font-weight:600}
+  .c-str{color:#9fe08a}
+  .c-num{color:#e58fb1}
+  .c-com{color:#6f8aa3;font-style:italic}
+  .pre-label{font-family:'JetBrains Mono';font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--teal-d);margin:18px 0 -6px;display:block}
+
+  /* ---------- Callouts ---------- */
+  .trap,.tip,.rule{border-radius:var(--rad);padding:14px 18px;margin:16px 0;font-size:14.5px}
+  .trap{background:var(--amber-soft);border:1px solid #f1cf99}
+  .trap b{color:var(--amber)}
+  .tip{background:var(--teal-soft);border:1px solid #aee0e0}
+  .tip b{color:var(--teal-d)}
+  .rule{background:#eef1ff;border:1px solid #cdd2f5}
+  .rule b{color:var(--violet)}
+  .callout-tag{font-family:'JetBrains Mono';font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:inline-block;margin-right:8px}
+
+  /* ---------- Tables ---------- */
+  .tbl{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--rad);overflow:hidden}
+  .tbl th{background:var(--ink-2);color:#e6eef6;text-align:left;padding:11px 14px;font-family:'Space Grotesk';font-weight:600;font-size:13.5px}
+  .tbl td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top}
+  .tbl tr:nth-child(even) td{background:#fbfcfd}
+  .tbl td .mono{font-family:'JetBrains Mono';font-size:13px;color:var(--teal-d)}
+
+  /* ---------- Schema / relation cards ---------- */
+  .rel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
+  .rel{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(12,27,42,.05)}
+  .rel .rh{background:var(--ink);color:#fff;font-family:'Space Grotesk';font-weight:600;padding:9px 14px;font-size:14.5px;letter-spacing:.3px}
+  .rel ul{list-style:none;margin:0;padding:8px 0}
+  .rel li{display:flex;align-items:center;gap:8px;padding:4px 14px;font-family:'JetBrains Mono';font-size:12.5px;color:var(--ink-2);margin:0}
+  .badge{font-family:'JetBrains Mono';font-size:9.5px;font-weight:700;letter-spacing:.5px;border-radius:4px;padding:1px 5px;color:#fff;flex:none}
+  .pk{background:var(--gold)}
+  .fk{background:var(--violet)}
+
+  /* SVG figure wrapper */
+  figure{margin:22px 0;background:var(--card);border:1px solid var(--line);border-radius:var(--rad);padding:18px;box-shadow:0 2px 10px rgba(12,27,42,.05)}
+  figure svg{width:100%;height:auto;display:block}
+  figcaption{font-size:13px;color:var(--muted);margin-top:10px;text-align:center}
+  .svg-l{font-family:'JetBrains Mono';font-size:11px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+
+  .venn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:18px 0}
+  .venn{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .venn h4{margin:0 0 4px;color:var(--ink)}
+  .venn p{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+
+  .q{counter-increment:q;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px 4px;margin:14px 0}
+  .q .qt{font-weight:600;color:var(--ink);font-size:14.5px;display:flex;gap:10px;margin-bottom:2px}
+  .q .qt::before{content:"Q" counter(q);font-family:'JetBrains Mono';font-size:12px;background:var(--teal-soft);color:var(--teal-d);border-radius:6px;padding:2px 8px;flex:none;height:fit-content}
+  .qwrap{counter-reset:q}
+
+  .toptag{font-family:'JetBrains Mono';font-size:11px;color:var(--muted)}
+  .footer{padding:40px 0 10px;color:var(--muted);font-size:13.5px}
+  .backtop{position:fixed;right:18px;bottom:18px;background:var(--teal-d);color:#fff;border:none;border-radius:50%;width:46px;height:46px;font-size:18px;cursor:pointer;box-shadow:0 6px 18px rgba(10,110,110,.4);opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .backtop.show{opacity:1;pointer-events:auto}
+
+  /* mobile nav */
+  .menu-btn{display:none}
+  @media(max-width:900px){
+    .shell{grid-template-columns:1fr}
+    .toc{position:fixed;z-index:60;width:84%;max-width:320px;left:0;top:0;transform:translateX(-100%);transition:transform .3s;height:100vh}
+    .toc.open{transform:none}
+    .menu-btn{display:flex;align-items:center;gap:8px;position:fixed;top:12px;left:12px;z-index:70;background:var(--ink);color:#fff;border:none;border-radius:10px;padding:9px 13px;font-family:'Space Grotesk';font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(12,27,42,.3)}
+    main{padding-top:8px}
+    .hero{padding-top:60px}
+    .scrim{position:fixed;inset:0;background:rgba(12,27,42,.45);z-index:55;opacity:0;pointer-events:none;transition:.3s}
+    .scrim.open{opacity:1;pointer-events:auto}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+  :focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<button class="menu-btn" id="menuBtn" aria-label="Open contents">☰ Contents</button>
+<div class="scrim" id="scrim"></div>
+
+<div class="shell">
+  <!-- ============ TOC ============ -->
+  <nav class="toc" id="toc" aria-label="Table of contents">
+    <div class="brand">DBMS&nbsp;FINAL</div>
+    <div class="sub">Visual Master Guide</div>
+    <div class="grp">Foundations</div>
+    <a href="#schema"><span class="n">00</span>The Schema</a>
+    <a href="#ra"><span class="n">01</span>Relational Algebra</a>
+    <div class="grp">Core SQL</div>
+    <a href="#dml1"><span class="n">02</span>Insert · Delete · Update</a>
+    <a href="#select"><span class="n">03</span>The SELECT statement</a>
+    <a href="#joins"><span class="n">04</span>Joins</a>
+    <a href="#agg"><span class="n">05</span>Aggregates · GROUP BY</a>
+    <div class="grp">Subqueries</div>
+    <a href="#nested"><span class="n">06</span>Nested &amp; Set Ops</a>
+    <a href="#corr"><span class="n">07</span>Correlated · EXISTS</a>
+    <div class="grp">Design &amp; Practice</div>
+    <a href="#er"><span class="n">08</span>ER → Relational Mapping</a>
+    <a href="#sports"><span class="n">09</span>Solved: SportsDB (15)</a>
+    <a href="#joinq"><span class="n">10</span>Solved: Join Sheet</a>
+    <a href="#cheat"><span class="n">11</span>Cheat Sheet</a>
+  </nav>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="eyebrow">Final exam · revision</div>
+      <h1>Everything for tomorrow,<br>made visual.</h1>
+      <p>Every concept from your lectures — relational algebra through correlated subqueries — explained with diagrams, color-coded SQL, and fully worked answers. Built on the <b>COMPANY</b> schema your paper uses.</p>
+      <div class="chips">
+        <span class="chip"><b>6</b> core tables</span>
+        <span class="chip"><b>7</b> join types</span>
+        <span class="chip"><b>15</b> solved SportsDB queries</span>
+        <span class="chip"><b>1</b> execution order to never forget</span>
+      </div>
+    </header>
+
+    <!-- ============ 00 SCHEMA ============ -->
+    <section id="schema">
+      <div class="sec-head"><span class="num">00</span><h2>The Schema You Must Memorise</h2></div>
+      <p class="lead">If you can redraw this from memory, half the paper is already done. Almost every query targets these six tables. <span class="badge pk">PK</span> = primary key, <span class="badge fk">FK</span> = foreign key (points to another table).</p>
+
+      <figure>
+        <svg viewBox="0 0 920 540" role="img" aria-label="Entity relationship diagram of the COMPANY schema">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#6b5bd2"/>
+            </marker>
+          </defs>
+          <!-- connector lines (FK -> referenced) -->
+          <g stroke="#6b5bd2" stroke-width="2" fill="none" marker-end="url(#arrow)">
+            <path d="M250,150 C330,130 360,120 430,120"/>            <!-- EMP.Dno -> DEPT -->
+            <path d="M560,150 C520,200 360,200 250,180"/>            <!-- DEPT.Mgr -> EMP -->
+            <path d="M690,120 L770,120"/>                            <!-- DEPT_LOC -> DEPT (drawn reversed visually) -->
+            <path d="M620,160 C660,230 660,260 620,300"/>           <!-- PROJECT.Dnum -> DEPT -->
+            <path d="M360,330 C320,290 250,250 200,210"/>           <!-- WORKS_ON -> EMP -->
+            <path d="M470,340 C540,330 580,330 600,320"/>           <!-- WORKS_ON -> PROJECT -->
+            <path d="M150,330 C120,290 120,260 130,215"/>           <!-- DEPENDENT -> EMP -->
+          </g>
+          <!-- self loop on EMPLOYEE (Super_ssn) -->
+          <path d="M70,120 C20,90 20,200 70,175" stroke="#0a6e6e" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+          <text x="14" y="150" class="svg-l" fill="#0a6e6e" transform="rotate(-90 14 150)">Super_ssn</text>
+
+          <!-- boxes -->
+          <g font-family="JetBrains Mono" font-size="12">
+            <!-- EMPLOYEE -->
+            <rect x="70" y="100" width="180" height="96" rx="9" fill="#0c1b2a"/>
+            <text x="160" y="121" fill="#fff" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14">EMPLOYEE</text>
+            <text x="84" y="143" fill="#c6912b">Ssn (PK)</text>
+            <text x="84" y="160" fill="#cfe0ee">Fname, Salary, Sex</text>
+            <text x="84" y="177" fill="#9fb8d0">Super_ssn, Dno (FK)</text>
+
+            <!-- DEPARTMENT -->
+            <rect x="430" y="96" width="190" height="80" rx="9" fill="#0c1b2a"/>
+            <text x="525" y="117" fill="#fff" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14">DEPARTMENT</text>
+            <text x="444" y="139" fill="#c6912b">Dnumber (PK)</text>
+            <text x="444" y="156" fill="#9fb8d0">Dname, Mgr_ssn (FK)</text>
+
+            <!-- DEPT_LOCATIONS -->
+            <rect x="770" y="96" width="140" height="64" rx="9" fill="#13283d"/>
+            <text x="840" y="116" fill="#fff" text-anchor="middle" font-family="Space Grotesk" font-weight="600" font-size="12.5">DEPT_LOCATIONS</text>
+            <text x="784" y="138" fill="#9fb8d0">Dnumber (FK)</text>
+            <text x="784" y="153" fill="#9fb8d0">Dlocation</text>
+
+            <!-- PROJECT -->
+            <rect x="600" y="290" width="180" height="78" rx="9" fill="#0c1b2a"/>
+            <text x="690" y="311" fill="#fff" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14">PROJECT</text>
+            <text x="614" y="333" fill="#c6912b">Pnumber (PK)</text>
+            <text x="614" y="350" fill="#9fb8d0">Pname, Plocation, Dnum (FK)</text>
+
+            <!-- WORKS_ON -->
+            <rect x="330" y="330" width="180" height="78" rx="9" fill="#0a6e6e"/>
+            <text x="420" y="351" fill="#fff" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14">WORKS_ON</text>
+            <text x="344" y="373" fill="#d7f1f1">Essn (FK), Pno (FK)</text>
+            <text x="344" y="390" fill="#aee0e0">Hours · junction M:N</text>
+
+            <!-- DEPENDENT -->
+            <rect x="40" y="330" width="180" height="78" rx="9" fill="#13283d"/>
+            <text x="130" y="351" fill="#fff" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14">DEPENDENT</text>
+            <text x="54" y="373" fill="#9fb8d0">Essn (FK)</text>
+            <text x="54" y="390" fill="#9fb8d0">Dependent_name, Sex</text>
+          </g>
+          <text x="460" y="455" text-anchor="middle" fill="#5d7186" font-size="12.5" font-family="JetBrains Mono">→ arrow points from the foreign key to the primary key it references</text>
+          <text x="460" y="476" text-anchor="middle" fill="#0a6e6e" font-size="12.5" font-family="JetBrains Mono">the self-loop on EMPLOYEE is the supervisor link — the reason self-joins exist</text>
+        </svg>
+        <figcaption>The COMPANY entity-relationship diagram. Teal boxes are the many-to-many junction (WORKS_ON) and multivalued tables.</figcaption>
+      </figure>
+
+      <div class="rel-grid">
+        <div class="rel"><div class="rh">EMPLOYEE</div><ul>
+          <li><span class="badge pk">PK</span>Ssn</li><li>Fname, Minit, Lname</li><li>Bdate, Address, Sex, Salary</li>
+          <li><span class="badge fk">FK</span>Super_ssn → Ssn</li><li><span class="badge fk">FK</span>Dno → Dnumber</li></ul></div>
+        <div class="rel"><div class="rh">DEPARTMENT</div><ul>
+          <li><span class="badge pk">PK</span>Dnumber</li><li>Dname, Mgr_start_date</li><li><span class="badge fk">FK</span>Mgr_ssn → Ssn</li></ul></div>
+        <div class="rel"><div class="rh">DEPT_LOCATIONS</div><ul>
+          <li><span class="badge pk">PK</span>(Dnumber, Dlocation)</li><li><span class="badge fk">FK</span>Dnumber → Dnumber</li></ul></div>
+        <div class="rel"><div class="rh">PROJECT</div><ul>
+          <li><span class="badge pk">PK</span>Pnumber</li><li>Pname, Plocation</li><li><span class="badge fk">FK</span>Dnum → Dnumber</li></ul></div>
+        <div class="rel"><div class="rh">WORKS_ON</div><ul>
+          <li><span class="badge pk">PK</span>(Essn, Pno)</li><li>Hours</li><li><span class="badge fk">FK</span>Essn → Ssn</li><li><span class="badge fk">FK</span>Pno → Pnumber</li></ul></div>
+        <div class="rel"><div class="rh">DEPENDENT</div><ul>
+          <li><span class="badge pk">PK</span>(Essn, Dependent_name)</li><li>Sex, Bdate, Relationship</li><li><span class="badge fk">FK</span>Essn → Ssn</li></ul></div>
+      </div>
+
+      <div class="tip"><span class="callout-tag">Read it as a story</span> An employee <b>works in</b> one department; a department <b>is managed by</b> one employee; an employee <b>is supervised by</b> another employee; a department <b>controls</b> many projects; employees and projects meet many-to-many in <b>WORKS_ON</b>; an employee <b>has</b> dependents.</div>
+    </section>
+
+    <!-- ============ 01 RELATIONAL ALGEBRA ============ -->
+    <section id="ra">
+      <div class="sec-head"><span class="num">01</span><h2>Relational Algebra</h2></div>
+      <p class="lead">A formal, mathematical set of operations on relations. Input is one or more tables; the output is <em>always</em> a new table. It is the theory that SQL is built on.</p>
+
+      <table class="tbl">
+        <tr><th>Operator</th><th>Symbol</th><th>Does what</th><th>SQL equivalent</th></tr>
+        <tr><td>Selection</td><td class="mono">σ</td><td>Picks <b>rows</b> matching a condition</td><td class="mono">WHERE</td></tr>
+        <tr><td>Projection</td><td class="mono">π</td><td>Picks <b>columns</b> (removes duplicates)</td><td class="mono">SELECT DISTINCT</td></tr>
+        <tr><td>Rename</td><td class="mono">ρ</td><td>Renames a relation / attribute</td><td class="mono">AS</td></tr>
+        <tr><td>Cartesian product</td><td class="mono">×</td><td>Every row of A with every row of B</td><td class="mono">FROM A, B</td></tr>
+        <tr><td>Join</td><td class="mono">⋈</td><td>Cartesian product <b>+ a match condition</b></td><td class="mono">JOIN … ON</td></tr>
+        <tr><td>Union</td><td class="mono">∪</td><td>Rows in A <b>or</b> B (no duplicates)</td><td class="mono">UNION</td></tr>
+        <tr><td>Intersection</td><td class="mono">∩</td><td>Rows in A <b>and</b> B</td><td class="mono">INTERSECT / IN</td></tr>
+        <tr><td>Set difference</td><td class="mono">−</td><td>Rows in A <b>but not</b> B</td><td class="mono">EXCEPT / NOT IN</td></tr>
+      </table>
+
+      <h3>The two basics in pictures</h3>
+      <figure>
+        <svg viewBox="0 0 760 230" role="img" aria-label="Selection picks rows, projection picks columns">
+          <text x="120" y="24" text-anchor="middle" font-family="Space Grotesk" font-weight="600" fill="#0c1b2a" font-size="15">σ Selection → rows</text>
+          <text x="560" y="24" text-anchor="middle" font-family="Space Grotesk" font-weight="600" fill="#0c1b2a" font-size="15">π Projection → columns</text>
+          <!-- selection grid -->
+          <g font-family="JetBrains Mono" font-size="11">
+            <rect x="30" y="40" width="220" height="160" rx="8" fill="#fff" stroke="#dde5ec"/>
+            <line x1="30" y1="72" x2="250" y2="72" stroke="#dde5ec"/>
+            <rect x="30" y="104" width="220" height="32" fill="#e3f4f4"/>
+            <rect x="30" y="168" width="220" height="32" fill="#e3f4f4"/>
+            <text x="44" y="62" fill="#5d7186">Name        Marks</text>
+            <text x="44" y="94" fill="#1b2a3a">Ali          72</text>
+            <text x="44" y="124" fill="#0a6e6e">Sara         88  ✓</text>
+            <text x="44" y="156" fill="#1b2a3a">Bilal        60</text>
+            <text x="44" y="188" fill="#0a6e6e">Ayesha       91  ✓</text>
+          </g>
+          <text x="140" y="222" fill="#5d7186" font-family="JetBrains Mono" font-size="11">σ marks &gt; 80 (Student)</text>
+          <!-- projection grid -->
+          <g font-family="JetBrains Mono" font-size="11">
+            <rect x="450" y="40" width="220" height="160" rx="8" fill="#fff" stroke="#dde5ec"/>
+            <rect x="450" y="40" width="110" height="160" fill="#e3f4f4"/>
+            <line x1="450" y1="72" x2="670" y2="72" stroke="#dde5ec"/>
+            <text x="464" y="62" fill="#0a6e6e">Name </text><text x="566" y="62" fill="#5d7186">Marks</text>
+            <text x="464" y="94" fill="#0a6e6e">Ali  </text><text x="566" y="94" fill="#b9c4cf">72</text>
+            <text x="464" y="124" fill="#0a6e6e">Sara </text><text x="566" y="124" fill="#b9c4cf">88</text>
+            <text x="464" y="156" fill="#0a6e6e">Bilal</text><text x="566" y="156" fill="#b9c4cf">60</text>
+            <text x="464" y="188" fill="#0a6e6e">Ayesha</text><text x="566" y="188" fill="#b9c4cf">91</text>
+          </g>
+          <text x="560" y="222" fill="#5d7186" font-family="JetBrains Mono" font-size="11">π Name (Student)</text>
+        </svg>
+        <figcaption>Selection keeps whole rows that pass a test. Projection keeps chosen columns and drops duplicates.</figcaption>
+      </figure>
+
+      <span class="pre-label">Examples</span>
+      <pre><code class="sql">σ marks>80 (Student)                         -- rows where marks exceed 80
+π Fname, Ssn (EMPLOYEE)                       -- only these two columns
+ρ EMPNAME ( π Fname (EMPLOYEE) )              -- relabel the result as EMPNAME
+π Name ( Student ⋈ Student.Did=Department.Dnumber Department )  -- join then project</code></pre>
+
+      <div class="rule"><span class="callout-tag">Translate the words</span> <b>"has no / does not"</b> → set difference <span class="tok">−</span> &nbsp;·&nbsp; <b>"has both X and Y"</b> → intersection <span class="tok">∩</span>. And remember <span class="mono">A − B ≠ B − A</span> (order matters), while ∪ and ∩ are commutative.</div>
+    </section>
+
+    <!-- ============ 02 DML ============ -->
+    <section id="dml1">
+      <div class="sec-head"><span class="num">02</span><h2>Insert · Delete · Update</h2></div>
+      <p class="lead">The three commands that <em>change</em> data. (SELECT, which only reads, is next.) DML = Data Manipulation Language — don't confuse it with DDL's <span class="tok">CREATE / ALTER / DROP</span>.</p>
+
+      <h3>INSERT — add rows</h3>
+      <pre><code class="sql">-- Full row: values in the SAME ORDER as CREATE TABLE
+INSERT INTO EMPLOYEE
+VALUES ('Richard','K','Marini','653298653','1952-12-30',
+        '98 Oak Forest, Katy, TX','M',37000,'987654321',4);
+
+-- Partial row: name the columns; the rest become NULL
+INSERT INTO EMPLOYEE (Fname, Lname, Ssn)
+VALUES ('Richard','Marini','653298653');
+
+-- Many rows at once
+INSERT INTO EMPLOYEE (Fname, Lname, Ssn)
+VALUES ('Richard','Marini','653298653'),
+       ('Ali','Ahmed','123456889');</code></pre>
+      <div class="trap"><span class="callout-tag">Trap</span> Skip the column list and you <b>must</b> supply every value in exact order; any omitted column must allow NULL or the insert fails.</div>
+
+      <h3>DELETE — remove rows</h3>
+      <pre><code class="sql">DELETE FROM EMPLOYEE WHERE Lname = 'Brown';   -- conditional
+DELETE FROM EMPLOYEE;                          -- DANGER: removes EVERY row</code></pre>
+      <div class="trap"><span class="callout-tag">Trap</span> No <span class="tok">WHERE</span> = the whole table is emptied. Deletes touch one table at a time unless a foreign key uses <span class="tok">ON DELETE CASCADE</span>.</div>
+
+      <h3>UPDATE — modify existing rows</h3>
+      <pre><code class="sql">UPDATE PROJECT
+SET Plocation = 'Bellaire', Dnum = 5
+WHERE Pnumber = 10;
+
+UPDATE EMPLOYEE
+SET Salary = Salary * 1.1     -- new value can depend on the old value (10% raise)
+WHERE Dno = 5;</code></pre>
+      <div class="trap"><span class="callout-tag">Trap</span> Forgetting <span class="tok">WHERE</span> in UPDATE changes <b>every</b> row in the table.</div>
+    </section>
+
+    <!-- ============ 03 SELECT ============ -->
+    <section id="select">
+      <div class="sec-head"><span class="num">03</span><h2>The SELECT Statement</h2></div>
+      <p class="lead">The most important statement in the course. Its shape: choose columns, name tables, filter rows.</p>
+      <pre><code class="sql">SELECT  <attribute list>      -- which columns
+FROM    <table list>          -- which tables
+WHERE   <condition>;          -- which rows</code></pre>
+
+      <h3>Core building blocks</h3>
+      <pre><code class="sql">SELECT Fname, Lname, Address FROM EMPLOYEE;           -- specific columns
+SELECT * FROM EMPLOYEE;                                -- everything
+SELECT DISTINCT Salary FROM EMPLOYEE;                  -- remove duplicate rows
+SELECT * FROM EMPLOYEE WHERE Dno IS NULL;              -- NULL test
+SELECT Fname FROM EMPLOYEE ORDER BY Fname DESC;        -- sort (default ASC)
+SELECT * FROM EMPLOYEE WHERE Salary BETWEEN 30000 AND 50000;  -- inclusive range
+SELECT Fname, Lname, 1.1*Salary FROM EMPLOYEE WHERE Dno=5;    -- arithmetic</code></pre>
+      <div class="trap"><span class="callout-tag">Trap</span> Never write <span class="tok">= NULL</span>. NULL is "unknown", so the test is never true. Always <span class="tok">IS NULL</span> / <span class="tok">IS NOT NULL</span>.</div>
+
+      <h3>LIKE — pattern matching (a guaranteed exam topic)</h3>
+      <figure>
+        <svg viewBox="0 0 760 170" role="img" aria-label="LIKE wildcards percent and underscore">
+          <rect x="40" y="30" width="320" height="110" rx="10" fill="#e3f4f4" stroke="#aee0e0"/>
+          <text x="200" y="64" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" font-size="30" fill="#0a6e6e">%</text>
+          <text x="200" y="98" text-anchor="middle" font-family="Inter" font-size="14" fill="#1b2a3a">any number of characters</text>
+          <text x="200" y="120" text-anchor="middle" font-family="Inter" font-size="13" fill="#5d7186">0, 1, or many</text>
+          <rect x="400" y="30" width="320" height="110" rx="10" fill="#fdf1df" stroke="#f1cf99"/>
+          <text x="560" y="64" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" font-size="30" fill="#e08a1e">_</text>
+          <text x="560" y="98" text-anchor="middle" font-family="Inter" font-size="14" fill="#1b2a3a">exactly one character</text>
+          <text x="560" y="120" text-anchor="middle" font-family="Inter" font-size="13" fill="#5d7186">a single placeholder</text>
+        </svg>
+        <figcaption>Two wildcards do all the work: <b>%</b> stretches, <b>_</b> holds one spot.</figcaption>
+      </figure>
+      <pre><code class="sql">WHERE Address LIKE '%Houston,TX%'   -- contains the substring anywhere
+WHERE Fname   LIKE 'K%'             -- starts with K
+WHERE Lname   LIKE '%d'             -- ends with d
+WHERE Fname   LIKE 'A%A'            -- starts AND ends with A
+WHERE Pname   LIKE '_r%'           -- 'r' in the 2nd position
+WHERE Pname   NOT LIKE '%H%'        -- does not contain H
+WHERE Salary  LIKE '_____'          -- exactly 5 characters (5-digit salary)</code></pre>
+
+      <h3>LIMIT — the "Nth highest" trick (MySQL)</h3>
+      <pre><code class="sql">SELECT Fname FROM EMPLOYEE ORDER BY Salary DESC LIMIT 0,1;  -- highest paid
+SELECT Fname FROM EMPLOYEE ORDER BY Salary DESC LIMIT 1,1;  -- 2nd highest</code></pre>
+      <p class="toptag">LIMIT offset, count → skip <em>offset</em> rows, then return <em>count</em> rows.</p>
+    </section>
+
+    <!-- ============ 04 JOINS ============ -->
+    <section id="joins">
+      <div class="sec-head"><span class="num">04</span><h2>Joins</h2></div>
+      <p class="lead">A join stitches tables together <em>side by side</em> on a related column — it adds columns. Master the four flavours and you can answer almost any retrieval question.</p>
+
+      <h3>Cross product — the starting point</h3>
+      <p>Every row of A paired with every row of B, with <em>no</em> condition. This is rarely what you want, but it's the basis of all joins.</p>
+      <figure>
+        <svg viewBox="0 0 700 200" role="img" aria-label="Cross product multiplies rows">
+          <rect x="40" y="40" width="120" height="120" rx="8" fill="#fff" stroke="#dde5ec"/>
+          <text x="100" y="30" text-anchor="middle" font-family="Space Grotesk" font-size="13" fill="#0c1b2a">A · 4 rows</text>
+          <g font-family="JetBrains Mono" font-size="12" fill="#1b2a3a"><text x="60" y="70">Ali</text><text x="60" y="95">Sara</text><text x="60" y="120">Bilal</text><text x="60" y="145">Ayesha</text></g>
+          <text x="195" y="108" text-anchor="middle" font-size="26" fill="#0a6e6e">×</text>
+          <rect x="230" y="60" width="120" height="80" rx="8" fill="#fff" stroke="#dde5ec"/>
+          <text x="290" y="50" text-anchor="middle" font-family="Space Grotesk" font-size="13" fill="#0c1b2a">B · 3 rows</text>
+          <g font-family="JetBrains Mono" font-size="12" fill="#1b2a3a"><text x="250" y="88">HR</text><text x="250" y="110">IT</text><text x="250" y="130">Finance</text></g>
+          <text x="395" y="108" text-anchor="middle" font-size="26" fill="#0a6e6e">=</text>
+          <rect x="430" y="60" width="230" height="80" rx="8" fill="#0c1b2a"/>
+          <text x="545" y="98" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="30" fill="#fff">12</text>
+          <text x="545" y="122" text-anchor="middle" font-family="Inter" font-size="13" fill="#9fb8d0">rows in the result</text>
+        </svg>
+        <figcaption>Rows out = rows(A) × rows(B). Columns out = cols(A) + cols(B). A favourite MCQ.</figcaption>
+      </figure>
+
+      <h3>The four join types — as Venn diagrams</h3>
+      <div class="venn-grid">
+        <div class="venn">
+          <svg viewBox="0 0 160 100" aria-label="Inner join"><defs><clipPath id="ci"><circle cx="62" cy="50" r="34"/></clipPath></defs><circle cx="62" cy="50" r="34" fill="#eef3f7" stroke="#0a6e6e"/><circle cx="98" cy="50" r="34" fill="#eef3f7" stroke="#0a6e6e"/><circle cx="98" cy="50" r="34" fill="#0ea5a5" clip-path="url(#ci)"/></svg>
+          <h4>INNER JOIN</h4><p>Only rows that match in <b>both</b> tables.</p>
+        </div>
+        <div class="venn">
+          <svg viewBox="0 0 160 100" aria-label="Left join"><circle cx="62" cy="50" r="34" fill="#0ea5a5" stroke="#0a6e6e"/><circle cx="98" cy="50" r="34" fill="#eef3f7" stroke="#0a6e6e" fill-opacity="0.5"/></svg>
+          <h4>LEFT JOIN</h4><p><b>All</b> of the left table + matches; unmatched right = NULL.</p>
+        </div>
+        <div class="venn">
+          <svg viewBox="0 0 160 100" aria-label="Right join"><circle cx="62" cy="50" r="34" fill="#eef3f7" stroke="#0a6e6e" fill-opacity="0.5"/><circle cx="98" cy="50" r="34" fill="#0ea5a5" stroke="#0a6e6e"/></svg>
+          <h4>RIGHT JOIN</h4><p><b>All</b> of the right table + matches; unmatched left = NULL.</p>
+        </div>
+        <div class="venn">
+          <svg viewBox="0 0 160 100" aria-label="Full outer join"><circle cx="62" cy="50" r="34" fill="#0ea5a5" stroke="#0a6e6e"/><circle cx="98" cy="50" r="34" fill="#0ea5a5" stroke="#0a6e6e"/></svg>
+          <h4>FULL OUTER</h4><p><b>Everything</b> from both sides. Not in MySQL — fake it with LEFT∪RIGHT.</p>
+        </div>
+      </div>
+
+      <h4>Inner join — three equivalent syntaxes</h4>
+      <pre><code class="sql">-- (a) implicit (comma + WHERE)
+SELECT s.RollNumber, s.Name, d.Dname
+FROM Student s, Department d
+WHERE s.Did = d.DNumber;
+
+-- (b) explicit — preferred
+SELECT s.RollNumber, s.Name, d.Dname
+FROM Student s INNER JOIN Department d ON s.Did = d.DNumber;
+
+-- (c) with an extra filter
+SELECT s.RollNumber, s.Name, d.Dname
+FROM Student s INNER JOIN Department d ON s.Did = d.DNumber
+WHERE d.Dname = 'FOIT';</code></pre>
+
+      <h4>Outer joins</h4>
+      <pre><code class="sql">SELECT s.Name, d.Dname FROM Student s LEFT  JOIN Department d ON s.Did=d.DNumber; -- keeps every student
+SELECT s.Name, d.Dname FROM Student s RIGHT JOIN Department d ON s.Did=d.DNumber; -- keeps every dept</code></pre>
+      <div class="rule"><span class="callout-tag">Decision rule</span> The phrase <b>"whether they have one or not"</b> / <b>"show all A"</b> → an <b>OUTER JOIN</b>. The phrase <b>"only those that have a matching…"</b> → an <b>INNER JOIN</b>.</div>
+
+      <h4>Natural join &amp; USING</h4>
+      <pre><code class="sql">SELECT * FROM Student NATURAL JOIN Department;     -- auto-joins on same-named column, no ON
+SELECT * FROM Student JOIN Department USING (Did);  -- name the shared column, shown once</code></pre>
+
+      <h4>Self join — a table joined to itself (two aliases)</h4>
+      <pre><code class="sql">SELECT e.Fname AS Employee, s.Fname AS Supervisor
+FROM EMPLOYEE e JOIN EMPLOYEE s ON e.Super_ssn = s.Ssn;</code></pre>
+
+      <h4>Multi-table join (employee → project)</h4>
+      <pre><code class="sql">SELECT e.Fname, p.Pname
+FROM EMPLOYEE e
+JOIN WORKS_ON w ON e.Ssn = w.Essn
+JOIN PROJECT  p ON w.Pno = p.Pnumber;</code></pre>
+      <p class="toptag">Several lecture slides had typos (IINER, Prjoect, Wroks_on). The corrected forms are above — write clean SQL in the exam.</p>
+    </section>
+
+    <!-- ============ 05 AGGREGATES ============ -->
+    <section id="agg">
+      <div class="sec-head"><span class="num">05</span><h2>Aggregates · GROUP BY · HAVING</h2></div>
+      <p class="lead">An aggregate function takes a set of values and returns a single value — the bridge from "list every row" to "summarise per group".</p>
+
+      <table class="tbl">
+        <tr><th>Function</th><th>Returns</th><th>Key detail</th></tr>
+        <tr><td class="mono">COUNT</td><td>number of rows/values</td><td><span class="mono">COUNT(*)</span> counts NULLs &amp; dupes; <span class="mono">COUNT(col)</span> ignores NULLs; <span class="mono">COUNT(DISTINCT col)</span> ignores both</td></tr>
+        <tr><td class="mono">SUM</td><td>total</td><td>numeric only</td></tr>
+        <tr><td class="mono">AVG</td><td>average</td><td>numeric only</td></tr>
+        <tr><td class="mono">MAX / MIN</td><td>largest / smallest</td><td>works on numbers, dates, text</td></tr>
+      </table>
+
+      <pre><code class="sql">SELECT SUM(Salary), MAX(Salary), MIN(Salary), AVG(Salary) FROM EMPLOYEE;
+SELECT Dno, COUNT(*), AVG(Salary) FROM EMPLOYEE GROUP BY Dno;   -- per department</code></pre>
+      <div class="tip"><span class="callout-tag">Golden rule</span> Every column in <span class="tok">SELECT</span> that is <b>not</b> inside an aggregate <b>must</b> appear in <span class="tok">GROUP BY</span>.</div>
+
+      <h3>WHERE vs HAVING</h3>
+      <pre><code class="sql">SELECT d.Dname, COUNT(dl.Dlocation) AS total_locations
+FROM DEPARTMENT d JOIN DEPT_LOCATIONS dl USING (Dnumber)
+GROUP BY d.Dname
+HAVING COUNT(dl.Dlocation) > 2;     -- filter on the aggregated result</code></pre>
+      <p><span class="tok">WHERE</span> filters <b>rows before</b> grouping; <span class="tok">HAVING</span> filters <b>groups after</b> aggregating. <span class="tok">HAVING</span> does nothing without <span class="tok">GROUP BY</span>.</p>
+
+      <h3>The order your query actually runs (memorise this)</h3>
+      <figure>
+        <svg viewBox="0 0 860 96" role="img" aria-label="Logical execution order of a SQL query">
+          <g font-family="JetBrains Mono" font-size="13" font-weight="700">
+            <g><rect x="6"   y="30" width="104" height="40" rx="8" fill="#0c1b2a"/><text x="58"  y="55" fill="#fff" text-anchor="middle">FROM</text></g>
+            <g><rect x="126" y="30" width="104" height="40" rx="8" fill="#13283d"/><text x="178" y="55" fill="#fff" text-anchor="middle">WHERE</text></g>
+            <g><rect x="246" y="30" width="120" height="40" rx="8" fill="#0a6e6e"/><text x="306" y="55" fill="#fff" text-anchor="middle">GROUP BY</text></g>
+            <g><rect x="382" y="30" width="104" height="40" rx="8" fill="#0a6e6e"/><text x="434" y="55" fill="#fff" text-anchor="middle">HAVING</text></g>
+            <g><rect x="502" y="30" width="104" height="40" rx="8" fill="#0ea5a5"/><text x="554" y="55" fill="#fff" text-anchor="middle">SELECT</text></g>
+            <g><rect x="622" y="30" width="120" height="40" rx="8" fill="#e08a1e"/><text x="682" y="55" fill="#fff" text-anchor="middle">ORDER BY</text></g>
+            <g><rect x="758" y="30" width="96" height="40" rx="8" fill="#c6912b"/><text x="806" y="55" fill="#fff" text-anchor="middle">LIMIT</text></g>
+          </g>
+          <g fill="#9fb8d0" font-size="16">
+            <text x="118" y="55">→</text><text x="238" y="55">→</text><text x="374" y="55">→</text><text x="494" y="55">→</text><text x="614" y="55">→</text><text x="750" y="55">→</text>
+          </g>
+        </svg>
+        <figcaption>This is <em>why</em> you can't use a SELECT alias in WHERE, and why aggregate conditions live in HAVING, not WHERE.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============ 06 NESTED ============ -->
+    <section id="nested">
+      <div class="sec-head"><span class="num">06</span><h2>Nested Queries &amp; Set Operations</h2></div>
+      <p class="lead">A subquery is a query inside another query (usually in <span class="tok">WHERE</span>). The inner query runs first and hands a value or list up to the outer query.</p>
+
+      <h3>IN / NOT IN — membership</h3>
+      <pre><code class="sql">-- IN is shorthand for many ORs
+SELECT Name FROM Student WHERE Name IN ('Maria','Maida','Madiha');
+
+-- Subquery feeding IN: employees in the Research department
+SELECT * FROM EMPLOYEE
+WHERE Dno IN (SELECT Dnumber FROM DEPARTMENT WHERE Dname='Research');
+
+-- Multi-level: employees on a project located in Stafford
+SELECT * FROM EMPLOYEE
+WHERE Ssn IN (SELECT Essn FROM WORKS_ON
+              WHERE Pno IN (SELECT Pnumber FROM PROJECT WHERE Plocation='Stafford'));
+
+-- NOT IN: employees who are not managers
+SELECT * FROM EMPLOYEE WHERE Ssn NOT IN (SELECT Mgr_ssn FROM DEPARTMENT);</code></pre>
+
+      <h3>Set operations, and how to fake them</h3>
+      <table class="tbl">
+        <tr><th>Operation</th><th>SQL</th><th>Alternative</th></tr>
+        <tr><td>Union (no dupes)</td><td class="mono">UNION</td><td>— only way</td></tr>
+        <tr><td>Union (keep dupes)</td><td class="mono">UNION ALL</td><td>—</td></tr>
+        <tr><td>Intersection</td><td class="mono">INTERSECT</td><td><span class="mono">IN</span> subquery / a JOIN</td></tr>
+        <tr><td>Difference</td><td class="mono">EXCEPT</td><td><span class="mono">NOT IN</span> subquery</td></tr>
+      </table>
+      <pre><code class="sql">SELECT Name FROM Student WHERE Address LIKE '%Lahore%'
+UNION
+SELECT Name FROM Teacher WHERE Address LIKE '%Lahore%'
+ORDER BY Name DESC;          -- ORDER BY goes ONCE, at the very end</code></pre>
+      <div class="trap"><span class="callout-tag">Union compatibility</span> Both SELECTs need the <b>same number of columns</b> with <b>matching domains</b>.</div>
+
+      <div class="grid2">
+        <div class="tip"><span class="callout-tag">JOIN</span> Combines <b>columns</b> — tables side by side. The result has <b>more columns</b>.</div>
+        <div class="tip"><span class="callout-tag">UNION</span> Stacks <b>rows</b> — one query below another. The result has <b>more rows</b>.</div>
+      </div>
+
+      <h3>ANY vs ALL</h3>
+      <figure>
+        <svg viewBox="0 0 760 180" role="img" aria-label="ANY equals OR equals greater than minimum; ALL equals AND equals greater than maximum">
+          <line x1="60" y1="60" x2="700" y2="60" stroke="#dde5ec" stroke-width="2"/>
+          <g font-family="JetBrains Mono" font-size="12">
+            <circle cx="180" cy="60" r="6" fill="#0a6e6e"/><text x="160" y="44" fill="#5d7186">min 20k</text>
+            <circle cx="340" cy="60" r="6" fill="#0a6e6e"/><text x="330" y="44" fill="#5d7186">30k</text>
+            <circle cx="500" cy="60" r="6" fill="#0a6e6e"/><text x="490" y="44" fill="#5d7186">50k</text>
+            <circle cx="620" cy="60" r="6" fill="#0a6e6e"/><text x="600" y="44" fill="#5d7186">max 55k</text>
+          </g>
+          <text x="120" y="110" font-family="Space Grotesk" font-weight="700" fill="#0a6e6e" font-size="15">&gt; ANY</text>
+          <text x="120" y="132" font-family="Inter" font-size="13" fill="#1b2a3a">= OR = beat <b>at least one</b> = &gt; MIN</text>
+          <text x="120" y="160" font-family="Space Grotesk" font-weight="700" fill="#e08a1e" font-size="15">&gt; ALL</text>
+          <text x="120" y="160" font-family="Inter" font-size="13" fill="#1b2a3a" dx="58">= AND = beat <b>every</b> value = &gt; MAX</text>
+          <line x1="180" y1="72" x2="700" y2="72" stroke="#0a6e6e" stroke-width="3"/>
+          <line x1="620" y1="84" x2="700" y2="84" stroke="#e08a1e" stroke-width="3"/>
+        </svg>
+        <figcaption>To beat ANY value, clear the lowest bar (MIN). To beat ALL values, clear the highest bar (MAX).</figcaption>
+      </figure>
+      <pre><code class="sql">SELECT Name FROM Employee WHERE Salary > ANY (SELECT Salary FROM Employee WHERE DeptID=10);
+-- equivalent to:  Salary > (SELECT MIN(Salary) FROM Employee WHERE DeptID=10)
+
+SELECT Name FROM Employee WHERE Salary > ALL (SELECT Salary FROM Employee WHERE DeptID=10);
+-- equivalent to:  Salary > (SELECT MAX(Salary) FROM Employee WHERE DeptID=10)</code></pre>
+    </section>
+
+    <!-- ============ 07 CORRELATED ============ -->
+    <section id="corr">
+      <div class="sec-head"><span class="num">07</span><h2>Correlated Subqueries · EXISTS</h2></div>
+      <p class="lead">A correlated subquery references a column from the outer query, so it re-runs once for every outer row. <span class="tok">EXISTS</span> is the classic correlated pattern.</p>
+
+      <div class="grid2">
+        <div class="tip"><span class="callout-tag">EXISTS</span> TRUE when the subquery returns <b>at least one</b> row → "has some / at least one".</div>
+        <div class="trap"><span class="callout-tag">NOT EXISTS</span> TRUE when the subquery returns <b>no</b> rows → "none / never / does not".</div>
+      </div>
+
+      <pre><code class="sql">-- Employees who work on at least one project (IN vs correlated EXISTS)
+SELECT * FROM EMPLOYEE WHERE Ssn IN (SELECT DISTINCT Essn FROM WORKS_ON);
+SELECT * FROM EMPLOYEE e WHERE EXISTS
+       (SELECT * FROM WORKS_ON w WHERE w.Essn = e.Ssn);
+
+-- Employees with NO dependents
+SELECT * FROM EMPLOYEE e WHERE NOT EXISTS
+       (SELECT * FROM DEPENDENT d WHERE d.Essn = e.Ssn);
+
+-- Customers who placed at least one order
+SELECT Name FROM Customer c WHERE EXISTS
+       (SELECT * FROM Orders o WHERE c.ID = o.C_id);</code></pre>
+      <div class="trap"><span class="callout-tag">Why prefer NOT EXISTS</span> If a <span class="tok">NOT IN</span> subquery returns even one NULL, the whole result silently becomes empty. <span class="tok">NOT EXISTS</span> is NULL-safe — say this for marks.</div>
+
+      <h3>The "break it into pieces" method</h3>
+      <p>For a hard query, solve each sub-part, then assemble. Projects involving an employee named Smith — as worker <em>or</em> as manager:</p>
+      <pre><code class="sql">SELECT DISTINCT Pname FROM PROJECT
+WHERE Pnumber IN (SELECT w.Pno FROM WORKS_ON w JOIN EMPLOYEE e ON e.Ssn=w.Essn
+                  WHERE e.Lname='Smith')                                  -- as worker
+   OR Pnumber IN (SELECT p.Pnumber FROM PROJECT p
+                  JOIN DEPARTMENT d ON p.Dnum=d.Dnumber
+                  JOIN EMPLOYEE  e ON d.Mgr_ssn=e.Ssn
+                  WHERE e.Lname='Smith');                                  -- as manager</code></pre>
+    </section>
+
+    <!-- ============ 08 ER MAPPING ============ -->
+    <section id="er">
+      <div class="sec-head"><span class="num">08</span><h2>ER → Relational Mapping</h2></div>
+      <p class="lead">Turning an ER diagram into tables. The standard seven steps — most exam ER questions are one of these.</p>
+      <table class="tbl">
+        <tr><th>#</th><th>ER element</th><th>Becomes</th></tr>
+        <tr><td>1</td><td>Strong entity</td><td>Its own table; pick the PK.</td></tr>
+        <tr><td>2</td><td>Weak entity</td><td>Own table; PK = owner's PK + partial key; owner's PK as FK.</td></tr>
+        <tr><td>3</td><td>1:1 relationship</td><td>Put one side's PK as a FK in the other.</td></tr>
+        <tr><td>4</td><td>1:N relationship</td><td>Put the "1" side's PK as a FK on the "N" side. <span class="mono">(e.g. Dno in EMPLOYEE)</span></td></tr>
+        <tr><td>5</td><td>M:N relationship</td><td>New junction table; PK = both entities' PKs + relationship attributes. <span class="mono">(WORKS_ON)</span></td></tr>
+        <tr><td>6</td><td>Multivalued attribute</td><td>Separate table (owner PK + the attribute), PK = both. <span class="mono">(DEPT_LOCATIONS)</span></td></tr>
+        <tr><td>7</td><td>N-ary relationship</td><td>One table holding all participants' PKs as a composite key.</td></tr>
+      </table>
+      <div class="tip"><span class="callout-tag">Spot the pattern</span> A table with a composite key built from <b>two foreign keys</b> = an <b>M:N junction</b>. A table of <b>(PK + one attribute)</b> = a <b>multivalued attribute</b> (e.g. <span class="mono">StudentHobby(St_ID, Hobby)</span>).</div>
+    </section>
+
+    <!-- ============ 09 SPORTSDB ============ -->
+    <section id="sports">
+      <div class="sec-head"><span class="num">09</span><h2>Solved — SportsDB Nesting Set</h2></div>
+      <p class="lead">All fifteen practice questions, fully answered. Tables: Team, Player, Tournament, MatchDetails, PlayerPerformance, Sponsor (assumptions noted where wording is ambiguous).</p>
+      <div class="qwrap">
+
+        <div class="q"><div class="qt">Players whose salary &gt; the average salary of their team (correlated).</div>
+        <pre><code class="sql">SELECT p.PlayerName, p.Salary FROM Player p
+WHERE p.Salary > (SELECT AVG(p2.Salary) FROM Player p2 WHERE p2.TeamID = p.TeamID);</code></pre></div>
+
+        <div class="q"><div class="qt">Highest-paid player from each team.</div>
+        <pre><code class="sql">SELECT p.PlayerName, p.TeamID, p.Salary FROM Player p
+WHERE p.Salary = (SELECT MAX(p2.Salary) FROM Player p2 WHERE p2.TeamID = p.TeamID);</code></pre></div>
+
+        <div class="q"><div class="qt">Teams having at least one player older than 35.</div>
+        <pre><code class="sql">SELECT TeamName FROM Team
+WHERE TeamID IN (SELECT TeamID FROM Player WHERE Age > 35);</code></pre></div>
+
+        <div class="q"><div class="qt">Tournaments whose prize money &gt; the average prize money.</div>
+        <pre><code class="sql">SELECT TournamentName, PrizeMoney FROM Tournament
+WHERE PrizeMoney > (SELECT AVG(PrizeMoney) FROM Tournament);</code></pre></div>
+
+        <div class="q"><div class="qt">Players who scored more runs than the average runs in their match (correlated).</div>
+        <pre><code class="sql">SELECT pp.PlayerID, pp.MatchID, pp.RunsScored FROM PlayerPerformance pp
+WHERE pp.RunsScored > (SELECT AVG(pp2.RunsScored)
+                       FROM PlayerPerformance pp2 WHERE pp2.MatchID = pp.MatchID);</code></pre></div>
+
+        <div class="q"><div class="qt">Teams that have won at least one match.</div>
+        <pre><code class="sql">SELECT TeamName FROM Team
+WHERE TeamID IN (SELECT WinnerTeamID FROM MatchDetails);</code></pre></div>
+
+        <div class="q"><div class="qt">Players who never played any match (NULL-safe NOT EXISTS).</div>
+        <pre><code class="sql">SELECT p.PlayerName FROM Player p
+WHERE NOT EXISTS (SELECT * FROM PlayerPerformance pp WHERE pp.PlayerID = p.PlayerID);</code></pre></div>
+
+        <div class="q"><div class="qt">Matches where no player scored more than 100 runs.</div>
+        <pre><code class="sql">SELECT m.MatchID FROM MatchDetails m
+WHERE NOT EXISTS (SELECT * FROM PlayerPerformance pp
+                  WHERE pp.MatchID = m.MatchID AND pp.RunsScored > 100);</code></pre></div>
+
+        <div class="q"><div class="qt">Players whose rating is higher than all teammates (assume avg rating per player).</div>
+        <pre><code class="sql">SELECT p.PlayerName FROM Player p
+WHERE (SELECT AVG(pp.Rating) FROM PlayerPerformance pp WHERE pp.PlayerID = p.PlayerID)
+    > ALL (SELECT AVG(pp2.Rating)
+           FROM Player p2 JOIN PlayerPerformance pp2 ON p2.PlayerID = pp2.PlayerID
+           WHERE p2.TeamID = p.TeamID AND p2.PlayerID <> p.PlayerID
+           GROUP BY p2.PlayerID);</code></pre></div>
+
+        <div class="q"><div class="qt">Teams having more sponsors than team 'Lahore Lions'.</div>
+        <pre><code class="sql">SELECT t.TeamName FROM Team t
+WHERE (SELECT COUNT(*) FROM Sponsor s WHERE s.TeamID = t.TeamID)
+    > (SELECT COUNT(*) FROM Sponsor s JOIN Team t2 ON s.TeamID = t2.TeamID
+       WHERE t2.TeamName = 'Lahore Lions');</code></pre></div>
+
+        <div class="q"><div class="qt">Players with a higher average rating than their team average.</div>
+        <pre><code class="sql">SELECT p.PlayerName FROM Player p
+WHERE (SELECT AVG(pp.Rating)  FROM PlayerPerformance pp WHERE pp.PlayerID = p.PlayerID)
+    > (SELECT AVG(pp2.Rating)
+       FROM PlayerPerformance pp2 JOIN Player p2 ON pp2.PlayerID = p2.PlayerID
+       WHERE p2.TeamID = p.TeamID);</code></pre></div>
+
+        <div class="q"><div class="qt">Matches where players from both teams scored centuries (≥100).</div>
+        <pre><code class="sql">SELECT m.MatchID FROM MatchDetails m
+WHERE EXISTS (SELECT * FROM PlayerPerformance pp JOIN Player p ON pp.PlayerID=p.PlayerID
+              WHERE pp.MatchID=m.MatchID AND pp.RunsScored>=100 AND p.TeamID=m.Team1ID)
+  AND EXISTS (SELECT * FROM PlayerPerformance pp JOIN Player p ON pp.PlayerID=p.PlayerID
+              WHERE pp.MatchID=m.MatchID AND pp.RunsScored>=100 AND p.TeamID=m.Team2ID);</code></pre></div>
+
+        <div class="q"><div class="qt">Teams that never lost any match (never appear as a non-winning participant).</div>
+        <pre><code class="sql">SELECT TeamName FROM Team t
+WHERE t.TeamID NOT IN (
+    SELECT Team1ID FROM MatchDetails WHERE WinnerTeamID <> Team1ID
+    UNION
+    SELECT Team2ID FROM MatchDetails WHERE WinnerTeamID <> Team2ID);</code></pre></div>
+
+        <div class="q"><div class="qt">Players whose total runs &gt; their team's average total runs (derived table + correlation).</div>
+        <pre><code class="sql">SELECT p.PlayerName FROM Player p
+WHERE (SELECT SUM(pp.RunsScored) FROM PlayerPerformance pp WHERE pp.PlayerID = p.PlayerID)
+    > (SELECT AVG(team_totals.player_total)
+       FROM (SELECT SUM(pp2.RunsScored) AS player_total
+             FROM PlayerPerformance pp2 JOIN Player p2 ON pp2.PlayerID = p2.PlayerID
+             WHERE p2.TeamID = p.TeamID
+             GROUP BY p2.PlayerID) AS team_totals);</code></pre></div>
+
+        <div class="q"><div class="qt">Sponsors whose amount &gt; all other sponsors of the same team.</div>
+        <pre><code class="sql">SELECT s.SponsorName, s.SponsorshipAmount FROM Sponsor s
+WHERE s.SponsorshipAmount > ALL (
+    SELECT s2.SponsorshipAmount FROM Sponsor s2
+    WHERE s2.TeamID = s.TeamID AND s2.SponsorID <> s.SponsorID);</code></pre></div>
+
+      </div>
+    </section>
+
+    <!-- ============ 10 JOIN SHEET ============ -->
+    <section id="joinq">
+      <div class="sec-head"><span class="num">10</span><h2>Solved — Join Queries Sheet</h2></div>
+      <p class="lead">The JOIN_QUERIES sheet, answered on the COMPANY schema.</p>
+      <div class="qwrap">
+        <div class="q"><div class="qt">Department managers + their department names; manager name starts with 'J'.</div>
+        <pre><code class="sql">SELECT e.Fname, e.Lname, d.Dname
+FROM EMPLOYEE e JOIN DEPARTMENT d ON e.Ssn = d.Mgr_ssn
+WHERE e.Fname LIKE 'J%';</code></pre></div>
+        <div class="q"><div class="qt">Details of departments located in Houston.</div>
+        <pre><code class="sql">SELECT d.* FROM DEPARTMENT d
+JOIN DEPT_LOCATIONS dl ON d.Dnumber = dl.Dnumber
+WHERE dl.Dlocation = 'Houston';</code></pre></div>
+        <div class="q"><div class="qt">Department names + names and salaries of the male employees.</div>
+        <pre><code class="sql">SELECT d.Dname, e.Fname, e.Lname, e.Salary
+FROM DEPARTMENT d JOIN EMPLOYEE e ON d.Dnumber = e.Dno
+WHERE e.Sex = 'M';</code></pre></div>
+        <div class="q"><div class="qt">Employees with the names of their supervisors (self join).</div>
+        <pre><code class="sql">SELECT e.Fname AS Employee, s.Fname AS Supervisor
+FROM EMPLOYEE e JOIN EMPLOYEE s ON e.Super_ssn = s.Ssn;</code></pre></div>
+        <div class="q"><div class="qt">Female employees + projects on which they spent at least 10 hours.</div>
+        <pre><code class="sql">SELECT e.Fname, e.Salary, p.Pname, w.Hours
+FROM EMPLOYEE e
+JOIN WORKS_ON w ON e.Ssn = w.Essn
+JOIN PROJECT  p ON w.Pno = p.Pnumber
+WHERE e.Sex = 'F' AND w.Hours >= 10;</code></pre></div>
+        <div class="q"><div class="qt">Dependents whose guardian works on a project in Houston or Stafford.</div>
+        <pre><code class="sql">SELECT DISTINCT dep.Dependent_name
+FROM DEPENDENT dep
+JOIN EMPLOYEE e ON dep.Essn = e.Ssn
+JOIN WORKS_ON w ON e.Ssn = w.Essn
+JOIN PROJECT  p ON w.Pno = p.Pnumber
+WHERE p.Plocation IN ('Houston','Stafford');</code></pre></div>
+        <div class="q"><div class="qt">Projects administered by a department whose manager is James Borg.</div>
+        <pre><code class="sql">SELECT p.* FROM PROJECT p
+JOIN DEPARTMENT d ON p.Dnum = d.Dnumber
+JOIN EMPLOYEE   e ON d.Mgr_ssn = e.Ssn
+WHERE e.Fname = 'James' AND e.Lname = 'Borg';</code></pre></div>
+      </div>
+
+      <h3>Join Activity — identify table &amp; join type</h3>
+      <table class="tbl">
+        <tr><th>Query</th><th>Tables</th><th>Join type</th></tr>
+        <tr><td>Dept + manager's name</td><td>DEPARTMENT, EMPLOYEE</td><td>Inner</td></tr>
+        <tr><td>Employee + supervisor name</td><td>EMPLOYEE (twice)</td><td><b>Self join</b></td></tr>
+        <tr><td>Employee + project he works on</td><td>EMPLOYEE, WORKS_ON, PROJECT</td><td>Inner (3-table)</td></tr>
+        <tr><td>Managers + dependents <em>whether or not</em> they have any</td><td>EMPLOYEE, DEPENDENT</td><td><b>Left outer</b></td></tr>
+        <tr><td>Projects + workers <em>whether or not</em> anyone works on it</td><td>PROJECT, WORKS_ON, EMPLOYEE</td><td><b>Left / right outer</b></td></tr>
+        <tr><td>"who works on what · who doesn't · which project isn't worked on"</td><td>EMPLOYEE, WORKS_ON, PROJECT</td><td><b>Full outer</b></td></tr>
+      </table>
+      <p class="toptag">The phrase "whether … or not" is your signal for an outer join.</p>
+    </section>
+
+    <!-- ============ 11 CHEAT SHEET ============ -->
+    <section id="cheat">
+      <div class="sec-head"><span class="num">11</span><h2>Last-Minute Cheat Sheet</h2></div>
+      <h3>Phrase → tool translation</h3>
+      <table class="tbl">
+        <tr><th>The question says…</th><th>Reach for</th></tr>
+        <tr><td>"all A, whether matched or not"</td><td class="mono">OUTER JOIN</td></tr>
+        <tr><td>"only A that have a matching B"</td><td class="mono">INNER JOIN / IN / EXISTS</td></tr>
+        <tr><td>"does not have / never / no"</td><td class="mono">NOT IN / NOT EXISTS / −</td></tr>
+        <tr><td>"has both X and Y"</td><td class="mono">two IN/EXISTS (AND) / INTERSECT</td></tr>
+        <tr><td>"greater than every / all"</td><td class="mono">&gt; ALL  ≡  &gt; MAX</td></tr>
+        <tr><td>"greater than some / any"</td><td class="mono">&gt; ANY  ≡  &gt; MIN</td></tr>
+        <tr><td>"for each / per group"</td><td class="mono">GROUP BY</td></tr>
+        <tr><td>"groups where count/avg…"</td><td class="mono">HAVING</td></tr>
+        <tr><td>"highest / Nth highest"</td><td class="mono">ORDER BY … DESC LIMIT n-1,1</td></tr>
+        <tr><td>"contains / starts / ends with"</td><td class="mono">LIKE with % and _</td></tr>
+        <tr><td>"no value / empty"</td><td class="mono">IS NULL</td></tr>
+      </table>
+
+      <h3>Don't-lose-marks checklist</h3>
+      <div class="grid2">
+        <ul>
+          <li><span class="tok">IS NULL</span>, never <span class="tok">= NULL</span>.</li>
+          <li><span class="tok">UPDATE</span>/<span class="tok">DELETE</span> with no <span class="tok">WHERE</span> hits every row.</li>
+          <li>Cross product rows = rows(A) × rows(B).</li>
+          <li>Aggregates can't go in <span class="tok">WHERE</span> → use <span class="tok">HAVING</span>.</li>
+          <li>Every non-aggregated SELECT column must be in <span class="tok">GROUP BY</span>.</li>
+        </ul>
+        <ul>
+          <li><span class="tok">COUNT(*)</span> counts NULLs; <span class="tok">COUNT(col)</span> doesn't.</li>
+          <li><span class="tok">UNION</span> needs equal column counts + matching domains.</li>
+          <li>Prefer <span class="tok">NOT EXISTS</span> over <span class="tok">NOT IN</span> when NULLs are possible.</li>
+          <li>Self-join needs two different aliases.</li>
+          <li>FULL OUTER JOIN isn't in MySQL — use LEFT <span class="tok">UNION</span> RIGHT.</li>
+        </ul>
+      </div>
+      <div class="tip"><span class="callout-tag">Final move</span> Skim Section 00 (the schema) and this cheat sheet one last time right before you walk in. You've got this.</div>
+
+      <p class="footer">Built from your lecture set — Relational Algebra, DML 6.1–6.2, Joins (L7), Aggregates (L8), Nested (L9), Correlated (L10), ER mapping, and the SportsDB &amp; Join activities. Where slide SQL had typos, the corrected version is shown.</p>
+    </section>
+  </main>
+</div>
+
+<button class="backtop" id="backtop" aria-label="Back to top">↑</button>
+
+<script>
+(function(){
+  // ---- SQL syntax highlighter ----
+  var KW = ['SELECT','FROM','WHERE','INSERT','INTO','VALUES','UPDATE','SET','DELETE','JOIN','INNER','LEFT','RIGHT','FULL','OUTER','CROSS','NATURAL','ON','USING','GROUP','BY','HAVING','ORDER','ASC','DESC','LIMIT','DISTINCT','AND','OR','NOT','IN','EXISTS','ANY','BETWEEN','LIKE','IS','NULL','AS','UNION','INTERSECT','EXCEPT','REFERENCES','PRIMARY','KEY','FOREIGN','CREATE','TABLE','DATABASE','USE'];
+  // ALL handled specially (also a word) — include:
+  KW.push('ALL');
+  var FN = ['COUNT','SUM','AVG','MAX','MIN'];
+  var kwSet = {}, fnSet = {};
+  KW.forEach(function(k){kwSet[k]=1;}); FN.forEach(function(f){fnSet[f]=1;});
+
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  function highlight(raw){
+    var lines = raw.split('\n');
+    return lines.map(function(line){
+      var comment = '';
+      var ci = line.indexOf('--');
+      if(ci >= 0){ comment = '<span class="c-com">' + esc(line.slice(ci)) + '</span>'; line = line.slice(0, ci); }
+      line = esc(line);
+      // pull out string literals
+      var strs = [];
+      line = line.replace(/&#39;[^&]*?&#39;|'[^']*'/g, function(m){ strs.push(m); return '\u0001'+(strs.length-1)+'\u0001'; });
+      // keywords / functions
+      line = line.replace(/[A-Za-z_]+/g, function(w){
+        var up = w.toUpperCase();
+        if(kwSet[up]) return '<span class="c-kw">'+w+'</span>';
+        if(fnSet[up]) return '<span class="c-fn">'+w+'</span>';
+        return w;
+      });
+      // numbers
+      line = line.replace(/\b\d+(\.\d+)?\b/g, '<span class="c-num">$&</span>');
+      // restore strings
+      line = line.replace(/\u0001(\d+)\u0001/g, function(_,i){ return '<span class="c-str">'+strs[i]+'</span>'; });
+      return line + comment;
+    }).join('\n');
+  }
+  document.querySelectorAll('pre code.sql').forEach(function(el){
+    el.innerHTML = highlight(el.textContent);
+  });
+
+  // ---- active TOC highlight ----
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var map = {};
+  links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(l){l.classList.remove('active');});
+        var a = map[e.target.id]; if(a) a.classList.add('active');
+      }
+    });
+  }, {rootMargin:'-20% 0px -70% 0px'});
+  document.querySelectorAll('section').forEach(function(s){obs.observe(s);});
+
+  // ---- back to top ----
+  var bt = document.getElementById('backtop');
+  window.addEventListener('scroll', function(){
+    if(window.scrollY > 600) bt.classList.add('show'); else bt.classList.remove('show');
+  });
+  bt.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+
+  // ---- mobile menu ----
+  var toc = document.getElementById('toc'), scrim = document.getElementById('scrim'), mb = document.getElementById('menuBtn');
+  function close(){ toc.classList.remove('open'); scrim.classList.remove('open'); }
+  mb.addEventListener('click', function(){ toc.classList.add('open'); scrim.classList.add('open'); });
+  scrim.addEventListener('click', close);
+  toc.addEventListener('click', function(e){ if(e.target.tagName === 'A') close(); });
+})();
+</script>
+</body>
+</html>
