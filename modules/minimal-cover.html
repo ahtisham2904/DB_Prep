@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equivalent FDs &amp; Minimal Cover · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html">Aggregates</a>
+      <a href="nested-queries.html">Subqueries</a>
+      <a href="correlated.html">Correlated</a>
+      <a href="set-operations.html">Set ops</a>
+      <a href="views.html">Views</a>
+      <a href="indexing.html">Indexing</a>
+      <a href="triggers.html">Triggers</a>
+      <a href="functional-dependencies.html">FDs</a>
+      <a href="keys.html">Keys</a>
+      <a href="minimal-cover.html" class="active">Min Cover</a>
+      <a href="normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 3 · Design Theory</div>
+    <h1>Equivalent FD Sets &amp; Minimal Cover</h1>
+    <p>Two FD sets are <b>equivalent</b> when each implies the other — they constrain the data identically. Among
+      all equivalent sets, the <b>minimal (canonical) cover</b> is the leanest: every right side is a single
+      attribute, no left side carries an extraneous attribute, and no FD is redundant. It's the clean starting
+      point for normalization.</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="equiv" class="active">FD set equivalence</button>
+    <button data-lesson="single">Step 1 · single RHS</button>
+    <button data-lesson="lhs">Step 2 · trim LHS</button>
+    <button data-lesson="redundant">Step 3 · remove redundant</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Work it through</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>The example &amp; algorithm</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">min_cover.txt</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>Definitions</h2>
+    <table class="tbl">
+      <thead><tr><th>Term</th><th>Meaning</th><th>Test</th></tr></thead>
+      <tbody>
+        <tr><td>F covers G</td><td>F implies every FD in G</td><td>for each <code>X→Y ∈ G</code>: <code>Y ⊆ X⁺_F</code></td></tr>
+        <tr><td>F ≡ G (equivalent)</td><td>F covers G and G covers F</td><td>both directions hold</td></tr>
+        <tr><td>Extraneous LHS attr</td><td>removable from a left side</td><td><code>(X−A)⁺</code> still contains Y</td></tr>
+        <tr><td>Redundant FD</td><td>implied by the others</td><td><code>X⁺</code> under F−{X→Y} contains Y</td></tr>
+        <tr><td>Minimal cover</td><td>single RHS · no extraneous LHS · no redundant FD</td><td>all three reductions applied</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li>Doing the steps out of order — always: (1) single RHS, (2) trim LHS, (3) remove redundant FDs.</li>
+          <li>When testing redundancy of <code>X→Y</code>, use the closure under <b>all the other</b> FDs, not the full set.</li>
+          <li>Minimal cover is <b>not unique</b> — different orders can yield different (but equivalent) covers.</li>
+          <li>Trimming LHS and removing FDs at the same time — do all LHS trimming first, then redundancy.</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>To prove <code>F ≡ G</code>: show every FD of G follows from F, and every FD of F follows from G — using closures.</li>
+          <li>Single-attribute RHS first makes the later steps much easier to reason about.</li>
+          <li>An attribute is extraneous in <code>XA→Y</code> if <code>X→Y</code> already holds under the set.</li>
+          <li>The minimal cover preserves all dependencies — it's the canonical input to 3NF synthesis.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="keys.html">← Keys</a>
+    <a class="btn btn-primary" href="../index.html">Back to syllabus →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Minimal Cover</span><span style="font-family:var(--mono)">equivalence · canonical cover</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+/* Example:  F = { A→BC, AB→C, B→C, A→B }   →  minimal cover { A→B, B→C } */
+const F0=[
+  {lhs:["A"],rhs:["B","C"]},
+  {lhs:["A","B"],rhs:["C"]},
+  {lhs:["B"],rhs:["C"]},
+  {lhs:["A"],rhs:["B"]}
+];
+function closure(X, Fset){ const cl=new Set(X); let ch=true;
+  while(ch){ ch=false; for(const {lhs,rhs} of Fset){ if(lhs.every(a=>cl.has(a))&&!rhs.every(a=>cl.has(a))){ rhs.forEach(a=>cl.add(a)); ch=true; } } }
+  return [...cl];
+}
+const key=f=>f.lhs.slice().sort().join('')+'>'+f.rhs.slice().sort().join('');
+function dedup(F){ const seen=new Set(),out=[]; for(const f of F){ const k=key(f); if(!seen.has(k)){seen.add(k); out.push({lhs:[...f.lhs],rhs:[...f.rhs]});} } return out; }
+function singleRHS(F){ const out=[]; for(const f of F) for(const r of f.rhs) out.push({lhs:[...f.lhs],rhs:[r]}); return dedup(out); }
+function trimLHS(F){ let G=F.map(f=>({lhs:[...f.lhs],rhs:[...f.rhs]}));
+  for(const f of G){ if(f.lhs.length<2) continue;
+    for(const a of [...f.lhs]){ const reduced=f.lhs.filter(x=>x!==a);
+      if(reduced.length && f.rhs.every(r=>closure(reduced,G).includes(r))) f.lhs=reduced; } }
+  return dedup(G);
+}
+function dropRedundant(F){ let G=F.map(f=>({lhs:[...f.lhs],rhs:[...f.rhs]}));
+  for(let i=0;i<G.length;i++){ const without=G.filter((_,j)=>j!==i);
+    if(G[i].rhs.every(r=>closure(G[i].lhs,without).includes(r))){ G.splice(i,1); i--; } }
+  return G;
+}
+function covers(F,G){ return G.every(g=> g.rhs.every(r=>closure(g.lhs,F).includes(r))); }
+function equivalent(F,G){ return covers(F,G)&&covers(G,F); }
+
+const STEP1=singleRHS(F0);
+const STEP2=trimLHS(STEP1);
+const MINCOVER=dropRedundant(STEP2);
+const G_TEST=[{lhs:["A"],rhs:["B"]},{lhs:["B"],rhs:["C"]}];
+
+/* ---- render ---- */
+const lab=f=>`${f.lhs.join('')} → ${f.rhs.join('')}`;
+function fdset(list, mark, title){
+  const body=list.map((f,i)=>{
+    const m=mark&&mark[i];
+    const C={active:['var(--gold)','rgba(251,191,36,.13)'],removed:['var(--rose)','rgba(251,113,133,.1)'],
+      added:['var(--emerald)','rgba(52,211,153,.1)'],keep:['var(--emerald)','rgba(52,211,153,.08)']}[m]||['var(--border)','var(--surface-2)'];
+    const deco=m==='removed'?'text-decoration:line-through;color:var(--ink-muted);':'';
+    const tag={active:'<span style="color:var(--gold)">◀ test</span>',removed:'<span style="color:var(--rose)">drop</span>',
+      added:'<span style="color:var(--emerald)">✓ new</span>',keep:'<span style="color:var(--emerald)">✓</span>'}[m]||'';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem .7rem;border:1px solid ${C[0]};background:${C[1]};border-radius:8px;font-family:var(--mono);font-size:.84rem;color:var(--ink-dim);${deco}"><span>${lab(f)}</span>${tag}</div>`;
+  }).join('');
+  return `<div>${title?`<div style="font-family:var(--mono);font-size:.72rem;color:var(--ink-muted);margin-bottom:.4rem">${title}</div>`:''}<div style="display:flex;flex-direction:column;gap:.32rem">${body}</div></div>`;
+}
+function cline(X,Fset,label){ return `<div style="font-family:var(--mono);font-size:.82rem;color:var(--ink-dim);margin:.35rem 0">${label||''}${X.join('')}⁺ = {${closure(X,Fset).join(', ')}}</div>`; }
+function verdict(t,ok){ return `<div style="font-family:var(--mono);font-size:.86rem;color:${ok?'var(--emerald)':'var(--rose)'};padding:.3rem 0">${t}</div>`; }
+function two(a,b){ return `<div style="display:flex;gap:1.4rem;flex-wrap:wrap;align-items:flex-start">${a}${b}</div>`; }
+
+const LESSONS={
+equiv:{
+  title:"When are two FD sets equivalent?",
+  body:"F and G are <b>equivalent</b> (F ≡ G) when each can derive the other: <b>F covers G</b> (every FD in G "+
+       "follows from F) and <b>G covers F</b>. You test coverage with closures — for each <code>X→Y</code> in "+
+       "one set, check that <code>Y ⊆ X⁺</code> computed under the other set.",
+  analogy:"<b>Like two recipes that make the same dish:</b> they may list steps differently, but the result — the "+
+          "set of constraints — is identical.",
+  fname:"equivalence.txt",
+  codeIntro:"Is F = {A→BC, AB→C, B→C, A→B} equivalent to the compact G = {A→B, B→C}? Test both directions.",
+  legend:[["#34D399","implied ✓"],["#60A5FA","being tested"]],
+  code:`F = { A->BC , AB->C , B->C , A->B }
+G = { A->B , B->C }
+
+F covers G:  every FD of G follows from F   (A+_F ⊇ B, B+_F ⊇ C)
+G covers F:  every FD of F follows from G
+F ≡ G  ⟺  both hold`,
+  build(){
+    return [
+      {note:"Does G cover F? Check each FD of F using closures computed under G.",
+        view:()=>two(fdset(F0,{},"F"),fdset(G_TEST,{},"G"))},
+      {note:"Under G: A⁺ = {A,B,C}. So A→BC, A→B, AB→C all follow from G. ✓",
+        view:()=>cline(['A'],G_TEST,'under G:  ')+verdict("A⁺_G ⊇ {B,C} → A→BC, A→B, AB→C implied ✓",true)},
+      {note:"Under G: B⁺ = {B,C}, so B→C follows too. Therefore <b>G covers F</b>.",
+        view:()=>cline(['B'],G_TEST,'under G:  ')+verdict("B⁺_G ⊇ {C} → B→C implied ✓  ⟹  G covers F",true)},
+      {note:"The reverse (F covers G) is easy: A→B and B→C are derivable from F. Both directions hold.",
+        view:()=>cline(['A'],F0,'under F:  ')+cline(['B'],F0,'under F:  ')+
+          verdict(equivalent(F0,G_TEST)?"F ≡ G  — the two sets are equivalent ✓":"not equivalent",equivalent(F0,G_TEST))}
+    ];
+  }
+},
+single:{
+  title:"Step 1 — make every right side a single attribute",
+  body:"By the decomposition rule, <code>X→YZ</code> is the same as <code>X→Y</code> and <code>X→Z</code>. "+
+       "Splitting every FD so each has a <b>single-attribute</b> right side puts the set in a standard form and "+
+       "makes the next two steps straightforward. Remove any duplicates that appear.",
+  analogy:"<b>Like itemising a combined invoice line</b> into one charge per item — same total, clearer to audit.",
+  fname:"step1.txt",
+  codeIntro:"Split A→BC into A→B and A→C; collect the rest; drop duplicate A→B.",
+  legend:[["#FBBF24","being split"],["#34D399","resulting single-RHS FDs"]],
+  code:`F        = { A->BC , AB->C , B->C , A->B }
+split RHS  ->  A->B , A->C , AB->C , B->C , A->B
+dedup      ->  { A->B , A->C , B->C , AB->C }`,
+  build(){
+    return [
+      {note:"Start with F. Only A→BC has a multi-attribute right side.",
+        view:()=>fdset(F0,{0:'active'},"F (original)")},
+      {note:"Decompose A→BC into A→B and A→C.",
+        view:()=>fdset([{lhs:["A"],rhs:["B"]},{lhs:["A"],rhs:["C"]}],{0:'added',1:'added'},"from A→BC")},
+      {note:"Collect every FD with single-attribute RHS, removing the duplicate A→B.",
+        view:()=>fdset(STEP1,STEP1.map(()=> 'keep'),"after Step 1 (single RHS)")}
+    ];
+  }
+},
+lhs:{
+  title:"Step 2 — remove extraneous left-side attributes",
+  body:"For any FD with a multi-attribute left side, an attribute is <b>extraneous</b> if the FD still holds "+
+       "without it. Test <code>AB→C</code>: if <code>B</code> alone already determines <code>C</code> (i.e. "+
+       "<code>C ∈ B⁺</code>), then <code>A</code> is extraneous and the FD shrinks to <code>B→C</code>.",
+  analogy:"<b>Like trimming a password hint that gives away too much:</b> if a shorter clue still works, drop the "+
+          "extra part.",
+  fname:"step2.txt",
+  codeIntro:"Only AB→C has a composite LHS. Is A or B extraneous?",
+  legend:[["#FBBF24","FD under test"],["#34D399","reduced FD"],["#FB7185","extraneous attr"]],
+  code:`Candidate: AB -> C   (composite LHS)
+Is A extraneous?  compute B+ under current set:
+   B+ = {B, C}   contains C  ->  A is extraneous
+AB -> C   becomes   B -> C   (already present)`,
+  build(){
+    return [
+      {note:"After Step 1 we have these four FDs. Only AB→C has a composite left side.",
+        view:()=>fdset(STEP1, {3:'active'}, "after Step 1")},
+      {note:"Test whether <b>A</b> is extraneous in AB→C: does B alone still determine C? Compute B⁺.",
+        view:()=>cline(['B'],STEP1,'')+verdict("C ∈ B⁺ → yes, A is extraneous in AB→C",true)},
+      {note:"Remove A → AB→C becomes B→C, which already exists. The set collapses.",
+        view:()=>fdset(STEP2, STEP2.map(()=>'keep'), "after Step 2 (LHS trimmed)")}
+    ];
+  }
+},
+redundant:{
+  title:"Step 3 — remove redundant FDs",
+  body:"An FD is <b>redundant</b> if it's already implied by the others. For each FD <code>X→Y</code>, remove it "+
+       "temporarily and compute <code>X⁺</code> under the remaining FDs; if Y is still reachable, the FD was "+
+       "redundant. What survives all three steps is the <b>minimal cover</b>.",
+  analogy:"<b>Like deleting a fact you can re-derive from the others</b> — no information lost, less to store.",
+  fname:"step3.txt",
+  codeIntro:"Test each of {A→B, A→C, B→C} for redundancy against the rest.",
+  legend:[["#FBBF24","FD under test"],["#FB7185","redundant → removed"],["#34D399","kept (minimal cover)"]],
+  code:`Test A->C:  remove it, A+ under {A->B, B->C} = {A,B,C}
+            C ∈ A+   ->  A->C is REDUNDANT, drop it
+Test A->B:  remove it, A+ under {A->C, B->C} = {A,C}   (no B) -> keep
+Test B->C:  remove it, B+ under {A->B}       = {B}     (no C) -> keep
+
+Minimal cover = { A->B , B->C }`,
+  build(){
+    const set=STEP2; // {A->B, A->C, B->C}
+    const idxAC=set.findIndex(f=>f.lhs.join('')==='A'&&f.rhs.join('')==='C');
+    return [
+      {note:"After Step 2 the set is {A→B, A→C, B→C}. Test each FD for redundancy.",
+        view:()=>fdset(set, {}, "after Step 2")},
+      {note:"Test <b>A→C</b>: remove it, compute A⁺ under the remaining {A→B, B→C}.",
+        view:()=>fdset(set, {[idxAC]:'active'}, "")+cline(['A'], set.filter((_,i)=>i!==idxAC), 'without A→C:  ')},
+      {note:"A⁺ = {A,B,C} still contains C → <b>A→C is redundant</b>, drop it.",
+        view:()=>fdset(set, {[idxAC]:'removed'}, "")+verdict("C ∈ A⁺ without A→C → redundant, removed",false)},
+      {note:"A→B and B→C are each non-redundant (removing either loses an attribute). Done.",
+        view:()=>fdset(MINCOVER, MINCOVER.map(()=>'keep'), "Minimal cover")},
+      {note:`Minimal cover = { ${MINCOVER.map(lab).join(' , ')} } — equivalent to F, with nothing to spare.`,
+        view:()=>two(fdset(F0,{},"original F"),fdset(MINCOVER,MINCOVER.map(()=>'added'),"minimal cover"))+
+          verdict(equivalent(F0,MINCOVER)?"verified: minimal cover ≡ F ✓":"mismatch",equivalent(F0,MINCOVER))}
+    ];
+  }
+}
+};
+
+const player=new StepPlayer({
+  mount:document.getElementById("stage"), narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"), render:(s)=>s.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl"); codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>`<span><i style="background:${c}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("equiv");
+</script>
+</body>
+</html>

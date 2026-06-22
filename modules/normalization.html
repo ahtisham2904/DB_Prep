@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Normalization · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html">Aggregates</a>
+      <a href="nested-queries.html">Subqueries</a>
+      <a href="correlated.html">Correlated</a>
+      <a href="set-operations.html">Set ops</a>
+      <a href="views.html">Views</a>
+      <a href="indexing.html">Indexing</a>
+      <a href="triggers.html">Triggers</a>
+      <a href="functional-dependencies.html">FDs</a>
+      <a href="keys.html">Keys</a>
+      <a href="minimal-cover.html">Min Cover</a>
+      <a href="normalization.html" class="active">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 3 · Design Theory</div>
+    <h1>Normalization — 1NF, 2NF &amp; 3NF</h1>
+    <p>Normalization restructures tables to remove redundancy and the update, insert, and delete <b>anomalies</b>
+      it causes. Each normal form adds one rule: <b>1NF</b> demands atomic values, <b>2NF</b> bans partial
+      dependencies on a composite key, and <b>3NF</b> bans transitive dependencies through non-prime attributes.
+      Each step <i>decomposes</i> a table into smaller, cleaner ones.</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="nf1" class="active">1NF · atomic</button>
+    <button data-lesson="nf2">2NF · no partial dep</button>
+    <button data-lesson="nf3">3NF · no transitive dep</button>
+    <button data-lesson="summary">The hierarchy</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Decompose it</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>The dependencies</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">schema.txt</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>Normal forms at a glance</h2>
+    <table class="tbl">
+      <thead><tr><th>Form</th><th>Requires</th><th>Removes</th></tr></thead>
+      <tbody>
+        <tr><td><b>1NF</b></td><td>atomic (single-valued) attributes; no repeating groups</td><td>multivalued / nested cells</td></tr>
+        <tr><td><b>2NF</b></td><td>1NF + no non-prime attribute depends on <i>part</i> of a candidate key</td><td>partial dependencies</td></tr>
+        <tr><td><b>3NF</b></td><td>2NF + no non-prime attribute depends on another non-prime attribute</td><td>transitive dependencies</td></tr>
+        <tr><td><b>BCNF</b></td><td>every determinant is a superkey (stricter 3NF)</td><td>remaining key anomalies</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li>Checking 2NF when the key is a <b>single</b> attribute — partial dependencies are impossible, so it's automatically 2NF.</li>
+          <li>Decomposing in a way that loses information — decompositions should be <b>lossless</b> (the join rebuilds the original).</li>
+          <li>Confusing 2NF (depends on <i>part of</i> the key) with 3NF (depends on a <i>non-key</i> attribute).</li>
+          <li>Forgetting to identify candidate keys first — every normal form is defined relative to them.</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>Order of attack: find candidate keys → 1NF (atomic) → 2NF (remove partial) → 3NF (remove transitive).</li>
+          <li>3NF test for <code>X→A</code>: it's OK if X is a superkey <b>or</b> A is a prime attribute.</li>
+          <li>Anomalies are the "why": redundancy causes update, insertion, and deletion anomalies.</li>
+          <li>A good decomposition is both <b>lossless-join</b> and ideally <b>dependency-preserving</b>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="minimal-cover.html">← Minimal Cover</a>
+    <a class="btn btn-primary" href="../index.html">Back to syllabus →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Normalization</span><span style="font-family:var(--mono)">1NF · 2NF · 3NF</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+/* ---- helpers ---- */
+function fdrow(text, kind){
+  const c={ok:'var(--emerald)',bad:'var(--rose)',key:'var(--gold)',info:'var(--blue)'}[kind]||'var(--ink-muted)';
+  return `<div style="display:inline-block;padding:.4rem .75rem;border:1px solid ${c};border-radius:8px;font-family:var(--mono);font-size:.84rem;color:var(--ink);background:rgba(255,255,255,.02);margin:.2rem .3rem .2rem 0">${text}</div>`;
+}
+function arrow(){ return `<div class="flow-arrow" style="text-align:center;margin:.3rem 0">↓ decompose ↓</div>`; }
+function pairTables(a,b){ return `<div class="tbl-flow">${a}<div class="flow-arrow">+</div>${b}</div>`; }
+function note(text,kind){ const c={bad:'var(--rose)',ok:'var(--emerald)',info:'var(--blue)'}[kind]||'var(--ink-muted)';
+  return `<div style="font-family:var(--mono);font-size:.84rem;color:${c};padding:.4rem 0">${text}</div>`; }
+
+const LESSONS={
+nf1:{
+  title:"1NF — every value must be atomic",
+  body:"A relation is in <b>First Normal Form</b> when every cell holds a single, indivisible value — no lists, "+
+       "sets, or repeating groups. A <code>phones</code> column packing two numbers into one cell breaks 1NF. "+
+       "The fix is to give each value its own row (or its own table).",
+  analogy:"<b>Like a spreadsheet rule: one fact per cell.</b> Stuffing 'home, work' into a single cell makes it "+
+          "impossible to sort, filter, or join cleanly.",
+  fname:"to_1nf.txt",
+  codeIntro:"The phones column is multivalued — split it so each phone is its own atomic row.",
+  legend:[["#FB7185","non-atomic (breaks 1NF)"],["#34D399","atomic (1NF)"]],
+  code:`-- ✗ Not 1NF: 'phones' holds multiple values
+Student(sid, name, phones)
+  (1, Ava, "555-1, 555-2")
+
+-- ✓ 1NF: one atomic value per row
+Student(sid, name, phone)
+  (1, Ava, 555-1)
+  (1, Ava, 555-2)`,
+  build(){
+    const bad={cols:["sid","name","phones"],rows:[[1,"Ava","555-1, 555-2"],[2,"Ben","555-9"]]};
+    const good={cols:["sid","name","phone"],rows:[[1,"Ava","555-1"],[1,"Ava","555-2"],[2,"Ben","555-9"]]};
+    return [
+      {note:"This table packs two phone numbers into one cell — a multivalued attribute.",
+        view:()=>table({caption:"Student (not 1NF)",...bad, rowClass:["drop",""], cellClass:{'0-2':'key'}})},
+      {note:"<b>Problem:</b> the <code>phones</code> cell isn't atomic, so you can't query a single phone reliably.",
+        view:()=>table({caption:"phones is non-atomic",...bad, rowClass:["drop",""]})+note("✗ violates 1NF — multivalued cell","bad")},
+      {note:"<b>Fix:</b> give each phone its own row, repeating the other columns.",
+        view:()=>table({caption:"Student (1NF)",...good, rowClass:["keep","keep","keep"]})},
+      {note:"Now every value is atomic — the table is in First Normal Form.",
+        view:()=>table({caption:"Student (1NF) ✓",...good, rowClass:["keep","keep","keep"]})+note("✓ all values atomic — 1NF satisfied","ok")}
+    ];
+  }
+},
+nf2:{
+  title:"2NF — no partial dependency on a composite key",
+  body:"Second Normal Form applies when the key is <b>composite</b>. It's violated if a non-prime attribute "+
+       "depends on only <b>part</b> of the key. In <code>Enroll(sid, course, sname, grade)</code> with key "+
+       "<code>{sid, course}</code>, <code>sname</code> depends on <code>sid</code> alone — a partial dependency "+
+       "that causes <code>sname</code> to repeat.",
+  analogy:"<b>Like writing a student's name next to every course they take:</b> the name has nothing to do with "+
+          "the course, so it's duplicated everywhere and goes stale on update.",
+  fname:"to_2nf.txt",
+  codeIntro:"Key = {sid, course}. sid→sname is partial; split sname into its own table keyed by sid.",
+  legend:[["#FBBF24","key attribute"],["#FB7185","partial dependency / redundancy"],["#34D399","decomposed (2NF)"]],
+  code:`Enroll(sid, course, sname, grade)        key = {sid, course}
+FDs:  sid -> sname        (partial — depends on PART of key)
+      {sid, course} -> grade  (full)
+
+Decompose (remove partial dependency):
+  Student(sid, sname)
+  Enroll (sid, course, grade)`,
+  build(){
+    const bad={cols:["sid","course","sname","grade"],rows:[
+      [1,"DB","Ava","A"],[1,"OS","Ava","B"],[2,"DB","Ben","A"]]};
+    const stu={cols:["sid","sname"],rows:[[1,"Ava"],[2,"Ben"]]};
+    const enr={cols:["sid","course","grade"],rows:[[1,"DB","A"],[1,"OS","B"],[2,"DB","A"]]};
+    return [
+      {note:"Key is the composite {sid, course}. Notice 'Ava' repeats for every course sid 1 takes.",
+        view:()=>table({caption:"Enroll (1NF, key = sid+course)",...bad, cellClass:{'0-0':'key','0-1':'key','1-0':'key','1-1':'key','2-0':'key','2-1':'key'}})},
+      {note:"The FDs: <code>sid → sname</code> uses only part of the key (partial), while <code>{sid,course} → grade</code> uses all of it.",
+        view:()=>`<div>${fdrow("{sid, course} → grade","ok")} ${fdrow("sid → sname  (partial ✗)","bad")}</div>`+
+          table({caption:"sname depends on sid only",...bad, rowClass:["drop","drop",""]})},
+      {note:"<b>Anomaly:</b> updating Ava's name means editing multiple rows; you also can't store a student with no course.",
+        view:()=>note("redundancy + update/insert/delete anomalies","bad")+table({caption:"sname redundant",...bad, rowClass:["drop","drop","drop"]})},
+      {note:"<b>Decompose:</b> pull sname into Student(sid, sname); keep grade (fully dependent) in Enroll.",
+        view:()=>arrow()+pairTables(
+          table({caption:"Student (sid → sname)",...stu, rowClass:["keep","keep"], cellClass:{'0-0':'key','1-0':'key'}}),
+          table({caption:"Enroll (key sid+course)",...enr, rowClass:["keep","keep","keep"], cellClass:{'0-0':'key','0-1':'key','1-0':'key','1-1':'key','2-0':'key','2-1':'key'}}))},
+      {note:"Each non-prime attribute now depends on its whole key. Both tables are in 2NF, with no repetition of names.",
+        view:()=>pairTables(table({caption:"Student ✓",...stu, rowClass:["keep","keep"]}),
+          table({caption:"Enroll ✓",...enr, rowClass:["keep","keep","keep"]}))+note("✓ no partial dependencies — 2NF","ok")}
+    ];
+  }
+},
+nf3:{
+  title:"3NF — no transitive dependency",
+  body:"Third Normal Form bans a non-prime attribute depending on <b>another non-prime</b> attribute. In "+
+       "<code>Course(cid, dept, dept_head)</code> with key <code>cid</code>, we have <code>cid → dept</code> and "+
+       "<code>dept → dept_head</code>: <code>dept_head</code> depends on <code>cid</code> only <i>transitively</i>, "+
+       "through the non-key <code>dept</code>.",
+  analogy:"<b>Like storing each course's department head on the course row:</b> the head really belongs to the "+
+          "department, so it repeats across every course in that department.",
+  fname:"to_3nf.txt",
+  codeIntro:"cid → dept → dept_head is transitive. Split the dept→dept_head fact into its own table.",
+  legend:[["#FBBF24","key"],["#FB7185","transitive dependency"],["#34D399","decomposed (3NF)"]],
+  code:`Course(cid, dept, dept_head)            key = cid
+FDs:  cid -> dept
+      dept -> dept_head      (non-prime -> non-prime = transitive)
+
+Decompose (remove transitive dependency):
+  Course(cid, dept)
+  Dept  (dept, dept_head)`,
+  build(){
+    const bad={cols:["cid","dept","dept_head"],rows:[
+      ["C1","CS","Dr. Lee"],["C2","CS","Dr. Lee"],["C3","Math","Dr. Roy"]]};
+    const crs={cols:["cid","dept"],rows:[["C1","CS"],["C2","CS"],["C3","Math"]]};
+    const dpt={cols:["dept","dept_head"],rows:[["CS","Dr. Lee"],["Math","Dr. Roy"]]};
+    return [
+      {note:"Key is cid. But 'Dr. Lee' repeats for every CS course — a smell of transitive dependency.",
+        view:()=>table({caption:"Course (2NF, key = cid)",...bad, cellClass:{'0-0':'key','1-0':'key','2-0':'key'}})},
+      {note:"FDs: <code>cid → dept</code> and <code>dept → dept_head</code>. So dept_head depends on cid only through dept.",
+        view:()=>`<div>${fdrow("cid → dept","info")} ${fdrow("dept → dept_head  (transitive ✗)","bad")}</div>`+
+          table({caption:"dept_head depends on dept, not cid",...bad, rowClass:["drop","drop",""]})},
+      {note:"<b>Anomaly:</b> change the CS head and you must update every CS course row; a department with no course can't be stored.",
+        view:()=>note("transitive dependency → update/insert/delete anomalies","bad")+table({caption:"dept_head redundant",...bad, rowClass:["drop","drop","drop"]})},
+      {note:"<b>Decompose:</b> Course(cid, dept) keeps the direct fact; Dept(dept, dept_head) holds the transitive one.",
+        view:()=>arrow()+pairTables(
+          table({caption:"Course (cid → dept)",...crs, rowClass:["keep","keep","keep"], cellClass:{'0-0':'key','1-0':'key','2-0':'key'}}),
+          table({caption:"Dept (dept → dept_head)",...dpt, rowClass:["keep","keep"], cellClass:{'0-0':'key','1-0':'key'}}))},
+      {note:"No non-prime attribute depends on another non-prime attribute now. Both tables are in 3NF.",
+        view:()=>pairTables(table({caption:"Course ✓",...crs, rowClass:["keep","keep","keep"]}),
+          table({caption:"Dept ✓",...dpt, rowClass:["keep","keep"]}))+note("✓ no transitive dependencies — 3NF","ok")}
+    ];
+  }
+},
+summary:{
+  title:"The normal-form hierarchy",
+  body:"The forms nest: every 3NF relation is also in 2NF, and every 2NF relation is in 1NF. Each level removes "+
+       "one specific cause of redundancy. Get to 3NF and you've eliminated the classic update, insertion, and "+
+       "deletion anomalies for the vast majority of real schemas.",
+  analogy:"<b>Like nested filters of increasing fineness:</b> each pass catches a finer kind of redundancy the "+
+          "previous one missed.",
+  fname:"hierarchy.txt",
+  codeIntro:"What each normal form requires and the anomaly it eliminates.",
+  legend:[["#34D399","satisfied"],["#FB7185","anomaly removed"]],
+  code:`1NF ⊃ 2NF ⊃ 3NF ⊃ BCNF
+
+1NF : atomic values            (removes multivalued cells)
+2NF : + no partial dependency  (removes part-of-key redundancy)
+3NF : + no transitive dependency (removes non-key redundancy)`,
+  build(){
+    function nest(active){
+      const levels=[["1NF","atomic values"],["2NF","no partial dependency"],["3NF","no transitive dependency"]];
+      return `<div style="display:flex;flex-direction:column;gap:0">`+levels.map((l,i)=>{
+        const on=i<=active;
+        const pad=i*18;
+        return `<div style="margin-left:${pad}px;padding:.7rem 1rem;border:1px solid ${on?'var(--emerald)':'var(--border)'};
+          border-radius:10px;background:${on?'rgba(52,211,153,.08)':'var(--surface-2)'};margin-bottom:.4rem;
+          font-family:var(--mono);font-size:.85rem;color:${on?'var(--ink)':'var(--ink-muted)'};display:flex;justify-content:space-between;gap:1rem">
+          <b>${l[0]}</b><span style="color:var(--ink-muted);font-size:.76rem">${l[1]}</span>${on?'<span style="color:var(--emerald)">✓</span>':''}</div>`;
+      }).join('')+`</div>`;
+    }
+    return [
+      {note:"Start at 1NF: atomic values only.", view:()=>nest(0)},
+      {note:"2NF adds: no non-prime attribute depends on part of a key.", view:()=>nest(1)},
+      {note:"3NF adds: no non-prime attribute depends on another non-prime attribute.", view:()=>nest(2)},
+      {note:"The three anomalies that redundancy causes — and that normalization removes:",
+        view:()=>nest(2)+`<div style="margin-top:1rem;display:flex;flex-direction:column;gap:.4rem">
+          ${fdrow("Update anomaly: one fact stored many times → inconsistent edits","bad")}
+          ${fdrow("Insertion anomaly: can't add X without unrelated Y","bad")}
+          ${fdrow("Deletion anomaly: removing a row loses unrelated facts","bad")}</div>`}
+    ];
+  }
+}
+};
+
+const player=new StepPlayer({
+  mount:document.getElementById("stage"), narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"), render:(s)=>s.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl"); codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>`<span><i style="background:${c}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("nf1");
+</script>
+</body>
+</html>

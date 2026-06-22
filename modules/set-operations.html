@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set Operations · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html">Aggregates</a>
+      <a href="nested-queries.html">Subqueries</a>
+      <a href="correlated.html">Correlated</a>
+      <a href="set-operations.html" class="active">Set ops</a>
+      <a href="views.html">Views</a>
+      <a href="indexing.html">Indexing</a>
+      <a href="triggers.html">Triggers</a>
+      <a href="functional-dependencies.html">FDs</a>
+      <a href="keys.html">Keys</a>
+      <a href="minimal-cover.html">Min Cover</a>
+      <a href="normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 1 · Advanced Querying</div>
+    <h1>Set Operations — UNION, INTERSECT, MINUS</h1>
+    <p>Set operators combine the result sets of two queries vertically (stacking rows), treating them as
+      mathematical sets. <b>UNION</b> is everything in either; <b>INTERSECT</b> is what's in both;
+      <b>MINUS</b> (a.k.a. EXCEPT) is what's in the first but not the second. They require
+      <b>union compatibility</b> — matching column counts and types.</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="union" class="active">UNION</button>
+    <button data-lesson="unionall">UNION ALL</button>
+    <button data-lesson="intersect">INTERSECT</button>
+    <button data-lesson="minus">MINUS</button>
+    <button data-lesson="compat">Union compatibility</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Watch it execute</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>The SQL</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">set_op.sql</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>Operator summary</h2>
+    <table class="tbl">
+      <thead><tr><th>Operator</th><th>Returns</th><th>Duplicates?</th><th>Set analogy</th></tr></thead>
+      <tbody>
+        <tr><td><code>UNION</code></td><td>rows in A or B</td><td>removed (distinct)</td><td>A ∪ B</td></tr>
+        <tr><td><code>UNION ALL</code></td><td>rows in A or B</td><td>kept (faster)</td><td>A ⊎ B (multiset)</td></tr>
+        <tr><td><code>INTERSECT</code></td><td>rows in A and B</td><td>removed</td><td>A ∩ B</td></tr>
+        <tr><td><code>MINUS</code> / <code>EXCEPT</code></td><td>rows in A but not B</td><td>removed</td><td>A − B</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li>Mismatched column counts or incompatible types → <b>not union compatible</b>, query rejected.</li>
+          <li>Forgetting <code>UNION</code> removes duplicates (and sorts) — use <code>UNION ALL</code> if you need every row and speed.</li>
+          <li>Assuming column <i>names</i> must match — only the <b>count and types</b> (by position) must; output uses the first query's names.</li>
+          <li><code>MINUS</code> is Oracle's keyword; standard SQL / PostgreSQL use <code>EXCEPT</code>.</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>Set operators stack results <b>vertically</b>; joins combine <b>horizontally</b>.</li>
+          <li><code>ORDER BY</code> goes once, at the very end of the whole compound query.</li>
+          <li><code>UNION ALL</code> avoids the dedup/sort cost — prefer it when duplicates can't occur.</li>
+          <li><code>A INTERSECT B</code> ≡ <code>A MINUS (A MINUS B)</code> — a handy identity.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="correlated.html">← Correlated Subqueries</a>
+    <a class="btn btn-primary" href="../index.html">Back to syllabus →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Set Operations</span><span style="font-family:var(--mono)">UNION · INTERSECT · MINUS</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+const A={name:"OnlineCustomers", col:"name", rows:["Ava","Ben","Cy"]};
+const B={name:"StoreCustomers",  col:"name", rows:["Ben","Cy","Dee"]};
+const inBoth=v=>A.rows.includes(v)&&B.rows.includes(v);
+
+function tbl(title,rows,cls){ return table({caption:title,cols:["name"],rows:rows.map(r=>[r]),rowClass:cls||[]}); }
+function two(a,b){ return `<div class="tbl-flow">${a}<div class="flow-arrow" id="op">∪</div>${b}</div>`; }
+
+const LESSONS={
+union:{
+  title:"UNION — everything in either, no duplicates",
+  body:"<code>UNION</code> stacks the rows of both queries and then removes duplicates, returning the distinct "+
+       "set of values that appear in <b>either</b>. Ben and Cy appear in both inputs but show up once in the result.",
+  analogy:"<b>Like merging two guest lists into one:</b> everyone invited by either host attends, but nobody is "+
+          "counted twice.",
+  fname:"union.sql",
+  codeIntro:"Customers who shop online OR in-store. UNION combines and de-duplicates the two lists.",
+  legend:[["keep","kept in result"],["drop","duplicate removed"]],
+  code:`-- Customers who shop online OR in store (distinct)
+SELECT name FROM OnlineCustomers
+UNION
+SELECT name FROM StoreCustomers;`,
+  build(){
+    const all=[...A.rows,...B.rows];
+    const distinct=[...new Set(all)];
+    return [
+      {note:"Two union-compatible inputs (one column, same type).", view:()=>two(tbl(A.name,A.rows),tbl(B.name,B.rows))},
+      {note:"<code>UNION</code> first stacks all rows from both: Ava, Ben, Cy, Ben, Cy, Dee.",
+        view:()=>tbl("stacked (before dedup)",all, all.map((v,i)=> all.indexOf(v)===i?'':'drop'))},
+      {note:"Then it removes duplicates (Ben, Cy appeared twice). Result is the distinct union.",
+        view:()=>tbl("UNION result",distinct, distinct.map(()=>'keep'))},
+    ];
+  }
+},
+unionall:{
+  title:"UNION ALL — keep every row",
+  body:"<code>UNION ALL</code> is <code>UNION</code> without the de-duplication step. It simply concatenates "+
+       "both result sets, keeping every row — including duplicates. Because it skips the sort/dedup work, it's "+
+       "faster, and it's the right choice when duplicates are impossible or wanted.",
+  analogy:"<b>Like pouring two jars of marbles into one:</b> you keep every marble, even identical ones — no "+
+          "sorting, no discarding.",
+  fname:"union_all.sql",
+  codeIntro:"Same two lists, but every occurrence is kept. Ben and Cy now appear twice.",
+  legend:[["keep","every row kept"]],
+  code:`-- All rows from both, duplicates included (faster)
+SELECT name FROM OnlineCustomers
+UNION ALL
+SELECT name FROM StoreCustomers;`,
+  build(){
+    const all=[...A.rows,...B.rows];
+    return [
+      {note:"The two inputs again.", view:()=>two(tbl(A.name,A.rows),tbl(B.name,B.rows))},
+      {note:"<code>UNION ALL</code> concatenates both — and stops. No dedup, no sort.",
+        view:()=>tbl("UNION ALL result",all, all.map(()=>'keep'))},
+      {note:"Note Ben and Cy appear <b>twice</b> — that's the difference from plain UNION.",
+        view:()=>tbl("UNION ALL result",all, all.map((v,i)=> all.indexOf(v)!==i?'focus':'keep'))},
+    ];
+  }
+},
+intersect:{
+  title:"INTERSECT — only in both",
+  body:"<code>INTERSECT</code> returns only the rows that appear in <b>both</b> result sets — the overlap. "+
+       "Here that's customers who shop online <i>and</i> in store.",
+  analogy:"<b>Like finding mutual friends:</b> only people who appear on both lists make the cut.",
+  fname:"intersect.sql",
+  codeIntro:"Customers present in BOTH lists. Only Ben and Cy qualify.",
+  legend:[["keep","in both → kept"],["drop","only in one → removed"]],
+  code:`-- Customers who shop online AND in store
+SELECT name FROM OnlineCustomers
+INTERSECT
+SELECT name FROM StoreCustomers;`,
+  build(){
+    return [
+      {note:"The two inputs. INTERSECT will keep only their overlap.",
+        view:()=>setOp('∩')+two(tbl(A.name,A.rows),tbl(B.name,B.rows))},
+      {note:"Mark each value: is it present in <b>both</b> tables?",
+        view:()=>setOp('∩')+two(
+          tbl(A.name,A.rows,A.rows.map(v=>inBoth(v)?'keep':'drop')),
+          tbl(B.name,B.rows,B.rows.map(v=>inBoth(v)?'keep':'drop')))},
+      {note:"Ben and Cy are in both; Ava (online only) and Dee (store only) are dropped.",
+        view:()=>two(
+          tbl(A.name,A.rows,A.rows.map(v=>inBoth(v)?'keep':'drop')),
+          tbl(B.name,B.rows,B.rows.map(v=>inBoth(v)?'keep':'drop')))},
+      {note:"Result: the intersection.",
+        view:()=>tbl("INTERSECT result",A.rows.filter(v=>inBoth(v)),A.rows.filter(v=>inBoth(v)).map(()=>'keep'))},
+    ];
+  }
+},
+minus:{
+  title:"MINUS — in the first but not the second",
+  body:"<code>MINUS</code> (called <code>EXCEPT</code> in standard SQL/PostgreSQL) returns rows from the first "+
+       "query that do <b>not</b> appear in the second. It's set difference — A − B.",
+  analogy:"<b>Like listing your contacts who aren't on a 'do-not-call' list:</b> start with A, then strike out "+
+          "anyone who also appears in B.",
+  fname:"minus.sql",
+  codeIntro:"Online-only customers: in OnlineCustomers but NOT in StoreCustomers. Only Ava remains.",
+  legend:[["keep","in A only → kept"],["drop","also in B → removed"]],
+  code:`-- Online-only customers (A minus B)
+SELECT name FROM OnlineCustomers
+MINUS                     -- EXCEPT in standard SQL / PostgreSQL
+SELECT name FROM StoreCustomers;`,
+  build(){
+    const onlyA=A.rows.filter(v=>!B.rows.includes(v));
+    return [
+      {note:"Start from the first query's rows (OnlineCustomers).",
+        view:()=>setOp('−')+two(tbl(A.name+" (A)",A.rows),tbl(B.name+" (B)",B.rows))},
+      {note:"Strike out any A-row that also appears in B (Ben, Cy are in both).",
+        view:()=>setOp('−')+two(
+          tbl(A.name+" (A)",A.rows,A.rows.map(v=>B.rows.includes(v)?'drop':'keep')),
+          tbl(B.name+" (B)",B.rows,B.rows.map(()=>'dim')))},
+      {note:"What remains in A is the difference: Ava (online only).",
+        view:()=>tbl("MINUS result",onlyA,onlyA.map(()=>'keep'))},
+    ];
+  }
+},
+compat:{
+  title:"Union compatibility — the rule for combining",
+  body:"Two queries can only be combined by a set operator if they are <b>union compatible</b>: the same "+
+       "<b>number</b> of columns, and matching <b>data types</b> in each position (left to right). Column "+
+       "<i>names</i> don't need to match — the output adopts the first query's names.",
+  analogy:"<b>Like stacking two sheets of a spreadsheet:</b> they must have the same number of columns, and "+
+          "column 1 must be the same kind of data in both, or they won't line up.",
+  fname:"compatibility.sql",
+  codeIntro:"One valid and one invalid combination — see why the second is rejected.",
+  legend:[["keep","compatible ✓"],["drop","incompatible ✗"]],
+  code:`-- ✓ Compatible: same column count, same types by position
+SELECT name, city FROM Customer
+UNION
+SELECT name, city FROM Supplier;
+
+-- ✗ NOT compatible: different number of columns
+SELECT name FROM Customer
+UNION
+SELECT name, city FROM Supplier;        -- ERROR
+
+-- ✗ NOT compatible: type mismatch in position 2 (text vs number)
+SELECT name, city FROM Customer
+UNION
+SELECT name, age  FROM Person;          -- ERROR`,
+  build(){
+    return [
+      {note:"<b>Compatible:</b> both queries return (text, text) in the same order — they stack cleanly.",
+        view:()=>two(
+          table({caption:"Customer → (name, city)",cols:["name","city"],rows:[["Ava","NYC"],["Cy","LA"]],rowClass:["keep","keep"]}),
+          table({caption:"Supplier → (name, city)",cols:["name","city"],rows:[["Zed","NYC"]],rowClass:["keep"]}))},
+      {note:"<b>Incompatible #1:</b> different column counts (1 vs 2) — the engine rejects it.",
+        view:()=>two(
+          table({caption:"1 column",cols:["name"],rows:[["Ava"]],rowClass:["drop"]}),
+          table({caption:"2 columns",cols:["name","city"],rows:[["Zed","NYC"]],rowClass:["drop"]}))
+          +`<div style="color:var(--rose);font-family:var(--mono);font-size:.84rem;padding:.5rem 0">✗ column count mismatch → ERROR</div>`},
+      {note:"<b>Incompatible #2:</b> same count, but position 2 is text in one and a number in the other.",
+        view:()=>two(
+          table({caption:"(name, city : text)",cols:["name","city"],rows:[["Ava","NYC"]],rowClass:["drop"]}),
+          table({caption:"(name, age : number)",cols:["name","age"],rows:[["Zed","42"]],rowClass:["drop"]}))
+          +`<div style="color:var(--rose);font-family:var(--mono);font-size:.84rem;padding:.5rem 0">✗ type mismatch in column 2 → ERROR</div>`},
+    ];
+  }
+}
+};
+
+function setOp(sym){ return `<div style="font-family:var(--mono);font-size:.78rem;color:var(--ink-muted);margin-bottom:.3rem">set operator: <span style="color:var(--emerald);font-size:1.1rem">${sym}</span></div>`; }
+
+const player=new StepPlayer({
+  mount:document.getElementById("stage"), narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"), render:(s)=>s.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+const cmap={keep:"var(--emerald)",drop:"var(--rose)",focus:"var(--gold)",dim:"var(--ink-muted)"};
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl"); codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>`<span><i style="background:${cmap[c]||'#888'}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("union");
+</script>
+</body>
+</html>

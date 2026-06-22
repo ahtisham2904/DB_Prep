@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aggregates &amp; GROUP BY · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html" class="active">Aggregates</a>
+      <a href="nested-queries.html">Subqueries</a>
+      <a href="correlated.html">Correlated</a>
+      <a href="set-operations.html">Set ops</a>
+      <a href="views.html">Views</a>
+      <a href="indexing.html">Indexing</a>
+      <a href="triggers.html">Triggers</a>
+      <a href="functional-dependencies.html">FDs</a>
+      <a href="keys.html">Keys</a>
+      <a href="minimal-cover.html">Min Cover</a>
+      <a href="normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 1 · Advanced Querying</div>
+    <h1>Aggregate Functions, GROUP BY &amp; HAVING</h1>
+    <p>Aggregate functions collapse many rows into a single value — a count, a total, an average. <b>GROUP BY</b>
+      runs those aggregates <i>per group</i> instead of over the whole table, and <b>HAVING</b> filters the
+      groups afterwards. Together they answer almost every "per category" question you'll ever ask of data.</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="agg" class="active">Aggregate functions</button>
+    <button data-lesson="groupby">GROUP BY</button>
+    <button data-lesson="having">HAVING</button>
+    <button data-lesson="order">Order of execution</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Watch it execute</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>The SQL</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">query.sql</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>Reference</h2>
+    <table class="tbl">
+      <thead><tr><th>Function</th><th>Returns</th><th>Ignores NULLs?</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><code>COUNT(*)</code></td><td>number of rows</td><td>No (counts every row)</td><td>total employees</td></tr>
+        <tr><td><code>COUNT(col)</code></td><td>non-null values in col</td><td>Yes</td><td>employees with a bonus</td></tr>
+        <tr><td><code>SUM(col)</code></td><td>total of numeric col</td><td>Yes</td><td>total payroll</td></tr>
+        <tr><td><code>AVG(col)</code></td><td>mean of numeric col</td><td>Yes</td><td>average salary</td></tr>
+        <tr><td><code>MIN/MAX(col)</code></td><td>smallest / largest</td><td>Yes</td><td>lowest / highest salary</td></tr>
+      </tbody>
+    </table>
+    <div class="analogy" style="margin-top:1.2rem"><b>WHERE vs HAVING:</b> <code style="font-family:var(--mono)">WHERE</code>
+      filters <i>rows</i> before grouping; <code style="font-family:var(--mono)">HAVING</code> filters <i>groups</i>
+      after aggregation. You cannot use an aggregate in <code style="font-family:var(--mono)">WHERE</code> — that's exactly what <code style="font-family:var(--mono)">HAVING</code> is for.</div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li>Selecting a non-aggregated column that isn't in <code>GROUP BY</code> — illegal in standard SQL (and ambiguous).</li>
+          <li>Putting an aggregate in <code>WHERE</code> (e.g. <code>WHERE AVG(salary)>5000</code>) — use <code>HAVING</code>.</li>
+          <li>Forgetting that <code>COUNT(col)</code> skips NULLs while <code>COUNT(*)</code> doesn't.</li>
+          <li>Assuming <code>AVG</code> divides by total rows — it divides by the count of <b>non-NULL</b> values.</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>Logical execution order: <code>FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY</code>.</li>
+          <li>Every column in <code>SELECT</code> must be either aggregated or listed in <code>GROUP BY</code>.</li>
+          <li><code>HAVING</code> without <code>GROUP BY</code> treats the whole table as one group.</li>
+          <li>To filter rows <i>and</i> groups, combine <code>WHERE</code> (rows) with <code>HAVING</code> (groups).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="../index.html">← Syllabus</a>
+    <a class="btn btn-primary" href="nested-queries.html">Next: Subqueries →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Aggregates &amp; GROUP BY</span><span style="font-family:var(--mono)">COUNT · SUM · AVG · GROUP BY · HAVING</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+/* sample data: Employee(name, dept, salary) */
+const EMP={cols:["name","dept","salary"], rows:[
+  ["Ava","Sales",50],["Ben","Eng",80],["Cy","Sales",60],
+  ["Dee","Eng",90],["Eli","HR",55],["Finn","Sales",70],["Gia","Eng",75]]};
+const GIDX={Sales:1,Eng:2,HR:3};                 // group -> color class
+function deptOf(i){ return EMP.rows[i][1]; }
+function groupColors(){ return EMP.rows.map((r)=>GIDX[r[1]]); }
+
+const LESSONS={
+agg:{
+  title:"Aggregate functions — many rows, one value",
+  body:"An aggregate function reads a whole column and returns a single summary value. <code>COUNT</code> tallies "+
+       "rows, <code>SUM</code> totals them, <code>AVG</code> averages, and <code>MIN</code>/<code>MAX</code> "+
+       "find extremes. Without <code>GROUP BY</code>, the aggregate runs over the <b>entire</b> table.",
+  analogy:"<b>Like a calculator scanning a spreadsheet column</b> and writing one number at the bottom — the "+
+          "individual rows disappear into the summary.",
+  fname:"aggregate.sql",
+  codeIntro:"Five aggregates over the whole Employee table — each collapses 7 salary values into one number.",
+  legend:[["agg","computed value"]],
+  code:`-- Summary statistics over the whole table
+SELECT COUNT(*)      AS headcount,
+       SUM(salary)   AS total_payroll,
+       AVG(salary)   AS avg_salary,
+       MIN(salary)   AS lowest,
+       MAX(salary)   AS highest
+FROM   Employee;`,
+  build(){
+    const steps=[];
+    steps.push({note:"Start with all 7 rows of the Employee table.", view:()=>table({caption:"Employee",...EMP})});
+    steps.push({note:"<code>COUNT(*)</code> simply tallies the rows → 7.",
+      view:()=>table({caption:"Employee — COUNT(*)",...EMP, rowClass:EMP.rows.map(()=>'focus')})+
+        result([["COUNT(*)","7"]])});
+    steps.push({note:"<code>SUM(salary)</code> adds the salary column: 50+80+60+90+55+70+75 = 480.",
+      view:()=>colHi(2)+result([["SUM(salary)","480"]])});
+    steps.push({note:"<code>AVG(salary)</code> = SUM ÷ COUNT = 480 ÷ 7 ≈ 68.6.",
+      view:()=>colHi(2)+result([["AVG(salary)","68.6"]])});
+    steps.push({note:"<code>MIN</code> and <code>MAX</code> scan the column for the extremes: 50 and 90.",
+      view:()=>colHi(2)+result([["MIN(salary)","50"],["MAX(salary)","90"]])});
+    steps.push({note:"The full summary row — 7 rows became a single line of statistics.",
+      view:()=>result([["headcount","total","avg","min","max"]],[["7","480","68.6","50","90"]])});
+    return steps;
+  }
+},
+groupby:{
+  title:"GROUP BY — aggregate per category",
+  body:"<code>GROUP BY dept</code> partitions the rows into one bucket per department, then runs the aggregate "+
+       "<b>inside each bucket</b>. Instead of one number for the whole table, you get one row per group — the "+
+       "answer to 'X per category' questions.",
+  analogy:"<b>Like sorting mail into labelled bins</b> and then counting (or totalling) each bin separately, "+
+          "rather than the whole pile at once.",
+  fname:"group_by.sql",
+  codeIntro:"Average salary per department: GROUP BY collapses each department's rows into one result row.",
+  legend:[["g1","Sales"],["g2","Eng"],["g3","HR"],["agg","aggregate"]],
+  code:`-- Average salary for each department
+SELECT   dept,
+         COUNT(*)    AS employees,
+         AVG(salary) AS avg_salary
+FROM     Employee
+GROUP BY dept;`,
+  build(){
+    const steps=[];
+    steps.push({note:"The raw table, ungrouped.", view:()=>table({caption:"Employee",...EMP})});
+    steps.push({note:"<code>GROUP BY dept</code> partitions rows by department (colored stripes).",
+      view:()=>table({caption:"Partitioned by dept",...EMP, group:groupColors()})});
+    steps.push({note:"Sales group: Ava, Cy, Finn → AVG(50,60,70) = 60.",
+      view:()=>table({caption:"Sales bucket",...EMP, group:groupColors(),
+        rowClass:EMP.rows.map(i=>'') , })  /* highlight sales */
+        .replace(/<tr class="g1"/g,'<tr class="g1 keep"')+result([["dept","AVG"]],[["Sales","60"]])});
+    steps.push({note:"Eng group: Ben, Dee, Gia → AVG(80,90,75) = 81.7.",
+      view:()=>table({caption:"Eng bucket",...EMP, group:groupColors()})
+        .replace(/<tr class="g2"/g,'<tr class="g2 keep"')+result([["dept","AVG"]],[["Eng","81.7"]])});
+    steps.push({note:"HR group: only Eli → AVG(55) = 55.",
+      view:()=>table({caption:"HR bucket",...EMP, group:groupColors()})
+        .replace(/<tr class="g3"/g,'<tr class="g3 keep"')+result([["dept","AVG"]],[["HR","55"]])});
+    steps.push({note:"Final result: one row per department.",
+      view:()=>resultGrouped([["dept","employees","avg_salary"]],
+        [["Sales","3","60.0"],["Eng","3","81.7"],["HR","1","55.0"]],[1,2,3])});
+    return steps;
+  }
+},
+having:{
+  title:"HAVING — filter the groups",
+  body:"<code>WHERE</code> can't see aggregates because it runs <i>before</i> grouping. <code>HAVING</code> "+
+       "runs <i>after</i> aggregation, so it can filter on the computed group values — e.g. keep only "+
+       "departments whose average salary exceeds a threshold.",
+  analogy:"<b>WHERE is the bouncer at the door</b> checking each person (row); <b>HAVING is the inspector</b> "+
+          "who walks the finished rooms (groups) and rejects whole rooms that don't qualify.",
+  fname:"having.sql",
+  codeIntro:"Keep only departments with average salary above 58. HAVING filters the grouped result, not raw rows.",
+  legend:[["keep","group kept"],["drop","group rejected"],["agg","aggregate"]],
+  code:`-- Departments whose average salary exceeds 58
+SELECT   dept,
+         AVG(salary) AS avg_salary
+FROM     Employee
+GROUP BY dept
+HAVING   AVG(salary) > 58;`,
+  build(){
+    const steps=[];
+    steps.push({note:"After GROUP BY + AVG we have one row per department.",
+      view:()=>resultGrouped([["dept","avg_salary"]],[["Sales","60.0"],["Eng","81.7"],["HR","55.0"]],[1,2,3])});
+    steps.push({note:"<code>HAVING AVG(salary) > 58</code> tests each <b>group</b>'s aggregate.",
+      view:()=>resultGrouped([["dept","avg_salary"]],[["Sales","60.0"],["Eng","81.7"],["HR","55.0"]],[1,2,3],
+        ['focus','focus','focus'])});
+    steps.push({note:"Sales (60.0 &gt; 58) ✓ and Eng (81.7 &gt; 58) ✓ qualify; HR (55.0) ✗ is rejected.",
+      view:()=>resultGrouped([["dept","avg_salary"]],[["Sales","60.0"],["Eng","81.7"],["HR","55.0"]],[1,2,3],
+        ['keep','keep','drop'])});
+    steps.push({note:"Final result — only the qualifying groups remain.",
+      view:()=>resultGrouped([["dept","avg_salary"]],[["Sales","60.0"],["Eng","81.7"]],[1,2],['keep','keep'])});
+    return steps;
+  }
+},
+order:{
+  title:"The logical order of execution",
+  body:"SQL is written <code>SELECT … FROM … WHERE … GROUP BY … HAVING</code>, but it doesn't <i>run</i> in "+
+       "that order. Understanding the real sequence explains every aggregate rule: why <code>WHERE</code> "+
+       "can't use aggregates, why <code>HAVING</code> can, and why <code>SELECT</code> aliases aren't visible "+
+       "to <code>WHERE</code>.",
+  analogy:"<b>Like a kitchen pipeline:</b> gather ingredients (FROM), discard bad ones (WHERE), sort into "+
+          "batches (GROUP BY), reject bad batches (HAVING), plate the dish (SELECT), arrange on the pass (ORDER BY).",
+  fname:"execution_order.sql",
+  codeIntro:"The clauses as written (top) versus the order the engine evaluates them (the animation).",
+  legend:[["keep","active stage"]],
+  code:`SELECT   dept, AVG(salary) AS avg_salary   -- 5. project columns
+FROM     Employee                          -- 1. read the table
+WHERE    salary > 0                         -- 2. filter rows
+GROUP BY dept                               -- 3. partition into groups
+HAVING   AVG(salary) > 58                   -- 4. filter groups
+ORDER BY avg_salary DESC;                   -- 6. sort the output`,
+  build(){
+    const stages=[
+      ["FROM","Read the Employee table — the source rows."],
+      ["WHERE","Filter individual rows (no aggregates allowed here yet)."],
+      ["GROUP BY","Partition the surviving rows into groups."],
+      ["HAVING","Filter whole groups using their aggregates."],
+      ["SELECT","Project the chosen columns / aggregates."],
+      ["ORDER BY","Sort the final output rows."]];
+    return stages.map(([s,d],i)=>({note:`<b>${i+1}. ${s}</b> — ${d}`, view:()=>pipeline(i)}));
+  }
+}
+};
+
+/* ---------- render helpers ---------- */
+function result(cols, rows){
+  if(!rows){ // cols is actually [[label,val],...]
+    return `<div class="flow-arrow" style="text-align:center">↓</div>`+
+      table({caption:"result", cols:cols.map(c=>c[0]), rows:[cols.map(c=>c[1])],
+        cellClass:Object.fromEntries(cols.map((_,i)=>['0-'+i,'agg']))});
+  }
+  return `<div class="flow-arrow" style="text-align:center">↓</div>`+
+    table({caption:"result", cols:cols[0], rows, cellClass:Object.fromEntries(rows[0].map((_,i)=>['0-'+i,'agg']))});
+}
+function resultGrouped(header, rows, groups, rowClass){
+  return `<div class="flow-arrow" style="text-align:center">↓</div>`+
+    table({caption:"grouped result", cols:header[0], rows, group:groups, rowClass:rowClass||[],
+      cellClass:Object.fromEntries(rows.map((r,i)=>[i+'-'+(r.length-1),'agg']))});
+}
+function colHi(c){ // highlight one column of EMP
+  const cc={}; EMP.rows.forEach((_,i)=> cc[i+'-'+c]='key');
+  return table({caption:"Employee — salary column",...EMP, cellClass:cc});
+}
+function pipeline(active){
+  const labels=["FROM","WHERE","GROUP BY","HAVING","SELECT","ORDER BY"];
+  return `<div style="display:flex; flex-direction:column; gap:.5rem; font-family:var(--mono); font-size:.86rem">`+
+    labels.map((l,i)=>{
+      const done=i<active, on=i===active;
+      const col=on?'var(--emerald)':done?'var(--ink-dim)':'var(--ink-muted)';
+      const bg=on?'rgba(52,211,153,.12)':'transparent';
+      const bd=on?'var(--emerald)':'var(--border)';
+      return `<div style="display:flex; align-items:center; gap:.7rem; padding:.6rem .9rem; border:1px solid ${bd};
+        border-radius:9px; background:${bg}; color:${col}">
+        <span style="width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:var(--surface-2);
+          color:${on?'var(--emerald)':'var(--ink-muted)'};font-weight:700;font-size:.72rem">${i+1}</span>
+        <b>${l}</b>${done?'<span style="margin-left:auto;color:var(--emerald)">✓</span>':on?'<span style="margin-left:auto">◀ running</span>':''}</div>`;
+    }).join('')+`</div>`;
+}
+
+/* ---------- wiring ---------- */
+const player=new StepPlayer({
+  mount:document.getElementById("stage"),
+  narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"),
+  render:(step)=> step.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+const cmap={agg:"var(--blue)",keep:"var(--emerald)",drop:"var(--rose)",focus:"var(--gold)",
+  g1:"var(--g1)",g2:"var(--g2)",g3:"var(--g3)"};
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl");
+  codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>
+    `<span><i style="background:${cmap[c]||'#888'}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("agg");
+</script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indexing · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html">Aggregates</a>
+      <a href="nested-queries.html">Subqueries</a>
+      <a href="correlated.html">Correlated</a>
+      <a href="set-operations.html">Set ops</a>
+      <a href="views.html">Views</a>
+      <a href="indexing.html" class="active">Indexing</a>
+      <a href="triggers.html">Triggers</a>
+      <a href="functional-dependencies.html">FDs</a>
+      <a href="keys.html">Keys</a>
+      <a href="minimal-cover.html">Min Cover</a>
+      <a href="normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 2 · Schema Objects &amp; Storage</div>
+    <h1>Indexing — from O(n) scans to O(log n) lookups</h1>
+    <p>An index is a small, sorted side-structure of <code>(key → pointer)</code> entries that lets the database
+      jump to a row without scanning the whole table. We'll build up from a brute-force scan to single-level
+      ordered indexes (dense &amp; sparse), then multilevel indexes, and finally the <b>B+-tree</b> — the
+      balanced structure real databases use.</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="scan" class="active">The problem: full scan</button>
+    <button data-lesson="ordered">Ordered index</button>
+    <button data-lesson="sparse">Dense vs sparse</button>
+    <button data-lesson="multilevel">Multilevel</button>
+    <button data-lesson="btree">B+-tree</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Watch the lookup</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>The SQL</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">index.sql</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>Index types at a glance</h2>
+    <table class="tbl">
+      <thead><tr><th>Index</th><th>Entries</th><th>Search cost</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>No index (heap scan)</td><td>—</td><td><code>O(n)</code></td><td>reads every row</td></tr>
+        <tr><td>Dense ordered</td><td>one per <b>record</b></td><td><code>O(log n)</code> binary search</td><td>direct pointer to each row</td></tr>
+        <tr><td>Sparse ordered</td><td>one per <b>block</b></td><td><code>O(log n)</code> + short block scan</td><td>smaller; needs ordered data</td></tr>
+        <tr><td>Multilevel</td><td>index over the index</td><td><code>O(log<sub>f</sub> n)</code> few block I/Os</td><td>fan-out f per level</td></tr>
+        <tr><td>B+-tree</td><td>balanced multilevel</td><td><code>O(log<sub>f</sub> n)</code></td><td>industry standard; range scans via linked leaves</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li>Over-indexing: every index speeds reads but <b>slows</b> INSERT/UPDATE/DELETE (the index must be maintained) and costs storage.</li>
+          <li>A <b>sparse</b> index requires the data file to be physically ordered on the key; a dense index doesn't.</li>
+          <li>Indexing a low-selectivity column (e.g. a boolean) rarely helps — the optimizer may still scan.</li>
+          <li>Functions on an indexed column in <code>WHERE</code> (e.g. <code>WHERE UPPER(name)=…</code>) can disable the index.</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>Primary index = on the ordering key (often sparse); secondary index = on a non-ordering field (must be dense).</li>
+          <li>Multilevel: each level reduces the search by the fan-out <code>f</code>, so cost ≈ <code>⌈log<sub>f</sub>(blocks)⌉</code>.</li>
+          <li>B+-trees keep <b>all data in the leaves</b> and link them, so range queries are very efficient.</li>
+          <li>B+-trees stay balanced — every search visits the same number of levels (root → leaf).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="views.html">← Views</a>
+    <a class="btn btn-primary" href="../index.html">Back to syllabus →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Indexing</span><span style="font-family:var(--mono)">ordered · sparse · multilevel · B+-tree</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+/* ---------- box / layout helpers ---------- */
+function box(key, sub, kind, opts){
+  opts=opts||{};
+  const m={
+    idle:['var(--border)','var(--surface-2)','var(--ink-dim)'],
+    range:['rgba(96,165,250,.5)','rgba(96,165,250,.08)','var(--ink)'],
+    cur:['var(--gold)','rgba(251,191,36,.13)','var(--ink)'],
+    found:['var(--emerald)','rgba(52,211,153,.15)','var(--ink)'],
+    out:['var(--border)','transparent','var(--ink-muted)'],
+    path:['var(--violet)','rgba(167,139,250,.13)','var(--ink)'],
+    data:['var(--border-2)','var(--surface)','var(--ink-dim)']
+  };
+  const [bd,bg,fg]=m[kind]||m.idle;
+  const op=kind==='out'?'opacity:.34;':'';
+  const wd=`min-width:${opts.w||60}px;`;
+  return `<div style="${wd}${op}display:flex;flex-direction:column;align-items:center;gap:.05rem;padding:.4rem .55rem;
+    border:1px solid ${bd};background:${bg};color:${fg};border-radius:8px;font-family:var(--mono);font-size:.84rem">
+    <b>${key}</b>${sub!=null?`<span style="font-size:.62rem;color:var(--ink-muted)">${sub}</span>`:''}</div>`;
+}
+function colWrap(inner,label){ return `<div><div style="font-family:var(--mono);font-size:.7rem;color:var(--ink-muted);margin-bottom:.35rem">${label||''}</div><div style="display:flex;flex-direction:column;gap:.32rem">${inner}</div></div>`; }
+function rowWrap(inner,label){ return `<div><div style="font-family:var(--mono);font-size:.7rem;color:var(--ink-muted);margin-bottom:.35rem">${label||''}</div><div style="display:flex;gap:.4rem;flex-wrap:wrap">${inner}</div></div>`; }
+function flow(...parts){ return `<div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">${parts.join('<div style="align-self:center;color:var(--ink-muted);font-size:1.3rem">→</div>')}</div>`; }
+
+const TARGET=60;
+const SCAN=[10,40,30,60,20,80,50,70];
+const SORTED=[10,20,30,40,50,60,70,80];
+
+const LESSONS={
+scan:{
+  title:"Without an index, you scan everything",
+  body:"In an unordered (heap) file, the only way to find key 60 is to read rows one after another until you "+
+       "hit it — or reach the end. That's <code>O(n)</code>: on average n/2 reads, n in the worst case. Fine "+
+       "for 8 rows, catastrophic for 8 million.",
+  analogy:"<b>Like finding a word in a shuffled pile of pages</b> with no order — you must check each page until "+
+          "you stumble on it.",
+  fname:"no_index.sql",
+  codeIntro:"A query with no usable index forces a full table scan.",
+  legend:[["cur","row being read"],["out","already checked"],["found","match"]],
+  code:`-- No index on emp_id → full table scan
+SELECT * FROM Employee WHERE emp_id = 60;
+-- planner: Seq Scan on Employee  (reads every row)`,
+  build(){
+    const steps=[{note:"An unordered data file. To find 60 we must read rows one by one.",
+      view:()=>rowWrap(SCAN.map((k,i)=>box(k,'row '+(i+1),'idle')).join(''),"Data file (unordered) — target = 60")}];
+    for(let i=0;i<=3;i++){
+      steps.push({note:i<3?`Read row ${i+1}: ${SCAN[i]} ≠ 60 → keep scanning.`:`Read row 4: 60 = 60 → found, after 4 reads.`,
+        view:()=>rowWrap(SCAN.map((k,j)=>box(k,'row '+(j+1), j<i?'out':j===i?(k===60?'found':'cur'):'idle')).join(''),"Sequential scan")});
+    }
+    steps.push({note:"Average n/2 reads, worst case n. We need a structure that lets us jump — an index.",
+      view:()=>rowWrap(SCAN.map(k=>box(k,null,k===60?'found':'out')).join(''),"O(n) — every row potentially read")});
+    return steps;
+  }
+},
+ordered:{
+  title:"Single-level ordered index — binary search",
+  body:"A <b>dense</b> ordered index stores one sorted entry per record: <code>(key → pointer)</code>. Because "+
+       "it's sorted, we can <b>binary search</b> it in <code>O(log n)</code>, then follow the pointer straight "+
+       "to the row — no scanning the data itself.",
+  analogy:"<b>Like the index at the back of a textbook:</b> look up the term alphabetically, jump to the exact "+
+          "page number it points to.",
+  fname:"create_index.sql",
+  codeIntro:"Create an index on emp_id, then the planner does an index lookup (binary search) instead of a scan.",
+  legend:[["range","still in search range"],["cur","mid (being compared)"],["found","match"],["out","discarded"]],
+  code:`-- Build a sorted index on emp_id
+CREATE INDEX idx_emp_id ON Employee(emp_id);
+
+SELECT * FROM Employee WHERE emp_id = 60;
+-- planner: Index Scan using idx_emp_id  (binary search → pointer)`,
+  build(){
+    const steps=[];
+    steps.push({note:"A dense ordered index: one sorted entry per record, each pointing to its row.",
+      view:()=>flow(
+        colWrap(SORTED.map(k=>box(k,'→ row','data')).join(''),"Index (sorted: key → pointer)"),
+        colWrap(SORTED.map(k=>box(k,'record','data')).join(''),"Data file"))});
+    const frames=[[0,7,3],[4,7,5]];
+    frames.forEach(([l,h,mid])=>{
+      steps.push({note:SORTED[mid]===TARGET?`mid = index[${mid}] = 60 = target → found! Follow its pointer.`
+          :`Binary search: mid = index[${mid}] = ${SORTED[mid]}; 60 &gt; ${SORTED[mid]} → keep the right half.`,
+        view:()=>colWrap(SORTED.map((k,i)=>box(k, i===mid?'mid':null, i===mid?(k===TARGET?'found':'cur'):(i>=l&&i<=h?'range':'out'))).join(''),
+          `Binary search over the index  (lo=${l}, hi=${h}, mid=${mid})`)});
+    });
+    steps.push({note:"The matched entry's pointer leads straight to record 60 — about log₂(8)=3 probes, not 8.",
+      view:()=>flow(box(60,'index entry','found'), box(60,'data record','found'))});
+    return steps;
+  }
+},
+sparse:{
+  title:"Dense vs sparse — one per record, or one per block",
+  body:"A <b>dense</b> index has an entry for every record. A <b>sparse</b> index keeps just one entry per "+
+       "data <b>block</b> (its first key), so it's much smaller — but the data file must be ordered, and you "+
+       "do a short scan inside the located block.",
+  analogy:"<b>Dense = a phone book with every name; sparse = only the first name on each page.</b> With sparse "+
+          "you flip to the right page, then glance down it.",
+  fname:"sparse.sql",
+  codeIntro:"A sparse index over ordered blocks: locate the block, then scan within it.",
+  legend:[["range","key ≤ target"],["cur","chosen anchor / block"],["found","match"],["out","too large"]],
+  code:`-- A primary (sparse) index is built on the ordering key.
+-- One index entry per block: the block's first (anchor) key.
+SELECT * FROM Employee WHERE emp_id = 60;  -- anchor 50 → block B3 → scan`,
+  build(){
+    const blocks=[[10,20],[30,40],[50,60],[70,80]];
+    const anchors=[10,30,50,70];
+    return [
+      {note:"Data is ordered in blocks. The sparse index holds one anchor (first key) per block.",
+        view:()=>flow(
+          colWrap(anchors.map((k,i)=>box(k,'→ B'+(i+1),'data')).join(''),"Sparse index (1 entry / block)"),
+          rowWrap(blocks.map((b,i)=>box(b.join(','),'B'+(i+1),'data',{w:78})).join(''),"Ordered data blocks"))},
+      {note:"Find the largest anchor ≤ 60: 10 ✓, 30 ✓, 50 ✓, 70 ✗ → choose anchor 50 → block B3.",
+        view:()=>colWrap(anchors.map(k=>box(k,'→ B'+(['10','30','50','70'].indexOf(String(k))+1), k===50?'cur':k<50?'range':'out')).join(''),"Scan index for largest anchor ≤ 60")},
+      {note:"Follow the pointer to B3 and scan inside it: 50 ≠ 60, then 60 = 60 → found.",
+        view:()=>rowWrap(blocks[2].map(k=>box(k,'B3',k===60?'found':'cur',{w:78})).join(''),"Short scan within block B3")},
+      {note:"Sparse uses far less space (1/block) at the cost of a tiny in-block scan; dense gives direct hits.",
+        view:()=>flow(
+          colWrap([box('dense','1 / record','data',{w:90}),box('larger','more space','out',{w:90}),box('direct','no block scan','found',{w:90})].join(''),"Dense"),
+          colWrap([box('sparse','1 / block','data',{w:90}),box('smaller','less space','found',{w:90}),box('scan blk','short scan','cur',{w:90})].join(''),"Sparse"))}
+    ];
+  }
+},
+multilevel:{
+  title:"Multilevel — an index on the index",
+  body:"When the index itself spans many blocks, searching it is slow again. The fix: build a smaller "+
+       "<b>outer</b> index whose entries point to <b>blocks of the inner</b> index. Each level cuts the search "+
+       "by the fan-out <code>f</code>, so cost becomes <code>⌈log<sub>f</sub> n⌉</code> block reads.",
+  analogy:"<b>Like a table of contents pointing to chapter indexes, which point to pages.</b> Two quick hops "+
+          "instead of flipping through one giant index.",
+  fname:"multilevel.sql",
+  codeIntro:"Two index levels: the outer routes to an inner block, the inner routes to the data.",
+  legend:[["cur","chosen at this level"],["path","route taken"],["found","match"],["out","skipped"]],
+  code:`-- Conceptually: a 2-level index
+-- outer index → inner index block → data block
+-- Search cost ≈ ceil(log_f(#blocks)) block accesses`,
+  build(){
+    const outer=[10,50];                 // each points to an inner block
+    const inner=[[10,30],[50,70]];       // anchors of data blocks
+    const dataB=[[10,20],[30,40],[50,60],[70,80]];
+    return [
+      {note:"Three levels: outer index → inner index blocks → ordered data blocks.",
+        view:()=>flow(
+          colWrap(outer.map((k,i)=>box(k,'→ II'+(i+1),'data')).join(''),"Outer index"),
+          colWrap(inner.map((blk,i)=>box(blk.join(','),'II'+(i+1),'data',{w:80})).join(''),"Inner index blocks"),
+          rowWrap(dataB.map((b,i)=>box(b.join(','),'B'+(i+1),'data',{w:78})).join(''),"Data blocks"))},
+      {note:"Outer level: largest key ≤ 60 is 50 → route to inner block II2.",
+        view:()=>flow(
+          colWrap(outer.map(k=>box(k,'→ II'+(outer.indexOf(k)+1), k===50?'cur':'out')).join(''),"Outer index"),
+          colWrap(inner.map((blk,i)=>box(blk.join(','),'II'+(i+1), i===1?'path':'out',{w:80})).join(''),"Inner index"))},
+      {note:"Inner block II2 = [50,70]: largest ≤ 60 is 50 → route to data block B3.",
+        view:()=>flow(
+          rowWrap(inner[1].map(k=>box(k, k===50?'cur':null, k===50?'cur':'out')).join(''),"Inner block II2"),
+          rowWrap(dataB.map((b,i)=>box(b.join(','),'B'+(i+1), i===2?'path':'out',{w:78})).join(''),"Data blocks"))},
+      {note:"Data block B3 = [50,60]: scan → 60 found. Just 2 index hops + 1 data read, regardless of table size.",
+        view:()=>rowWrap(dataB[2].map(k=>box(k,'B3',k===60?'found':'cur',{w:78})).join(''),"Data block B3")}
+    ];
+  }
+},
+btree:{
+  title:"B+-tree — the balanced index databases use",
+  body:"A <b>B+-tree</b> generalises the multilevel idea into a self-balancing tree. <b>Internal nodes</b> hold "+
+       "only routing keys; <b>all real keys live in the leaves</b>, which are linked left-to-right. Every search "+
+       "walks root → leaf — the same short depth for every key — and range scans just follow the leaf links.",
+  analogy:"<b>Like a always-balanced decision tree:</b> at each node you pick the right branch by comparing the "+
+          "key, descending a fixed number of levels to the answer every time.",
+  fname:"btree.sql",
+  codeIntro:"B-tree indexes are the default in PostgreSQL, MySQL, Oracle and more.",
+  legend:[["path","search path"],["cur","node being compared"],["found","match"],["data","leaf / node"]],
+  code:`-- B+-tree is the default index type
+CREATE INDEX idx_emp_id ON Employee(emp_id);   -- USING btree
+
+-- Great for equality AND range queries:
+SELECT * FROM Employee WHERE emp_id BETWEEN 50 AND 80;  -- walks leaves`,
+  build(){
+    const leaves=[[10,20],[30,40],[50,60],[70,80]];
+    function tree(o){
+      o=o||{};
+      const root=`<div style="display:inline-flex;align-items:center;gap:.25rem;padding:.45rem .7rem;border:1px solid ${o.rootHi?'var(--gold)':'var(--border-2)'};background:${o.rootHi?'rgba(251,191,36,.13)':'var(--surface)'};border-radius:9px;font-family:var(--mono);font-size:.84rem">`+
+        [30,50,70].map(k=>`<span style="color:var(--ink-muted)">◦</span><b style="color:var(--ink)">${k}</b>`).join('')+`<span style="color:var(--ink-muted)">◦</span></div>`;
+      const leafRow=`<div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center">`+
+        leaves.map((lf,i)=>box(lf.join('·'),'leaf '+(i+1), o.found===i?'found':o.leaf===i?'path':'data',{w:74})).join('')+`</div>`;
+      const links=`<div style="font-family:var(--mono);font-size:.64rem;color:var(--ink-muted);text-align:center;margin-top:.2rem">leaves linked:  L1 → L2 → L3 → L4  (range scans)</div>`;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:.55rem">
+        <div style="font-family:var(--mono);font-size:.7rem;color:var(--ink-muted)">B+-tree · internal routing keys [30 · 50 · 70]</div>
+        ${root}<div style="color:var(--ink-muted)">${o.arrow||'│'}</div>${leafRow}${links}</div>`;
+    }
+    return [
+      {note:"A B+-tree: root holds routing keys 30·50·70; the four leaves hold the actual keys and are linked.",
+        view:()=>tree({})},
+      {note:"Search 60 at the root: 60 ≥ 50 and 60 &lt; 70 → take the pointer between 50 and 70 (third child).",
+        view:()=>tree({rootHi:true, arrow:'│  60 ≥ 50, &lt; 70  → child 3 ▼'})},
+      {note:"Descend to leaf L3 = [50·60]. Every search travels the same root→leaf depth (balanced).",
+        view:()=>tree({leaf:2, arrow:'▼ descend to L3'})},
+      {note:"Scan leaf L3: 60 = 60 → found. For a range query, just walk the leaf links rightward.",
+        view:()=>tree({found:2, arrow:'▼'})}
+    ];
+  }
+}
+};
+
+const player=new StepPlayer({
+  mount:document.getElementById("stage"), narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"), render:(s)=>s.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+const cmap={range:"var(--blue)",cur:"var(--gold)",found:"var(--emerald)",out:"var(--ink-muted)",path:"var(--violet)",data:"var(--border-2)"};
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl"); codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>`<span><i style="background:${cmap[c]||'#888'}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("scan");
+</script>
+</body>
+</html>

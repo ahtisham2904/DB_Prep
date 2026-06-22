@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triggers · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html">Aggregates</a>
+      <a href="nested-queries.html">Subqueries</a>
+      <a href="correlated.html">Correlated</a>
+      <a href="set-operations.html">Set ops</a>
+      <a href="views.html">Views</a>
+      <a href="indexing.html">Indexing</a>
+      <a href="triggers.html" class="active">Triggers</a>
+      <a href="functional-dependencies.html">FDs</a>
+      <a href="keys.html">Keys</a>
+      <a href="minimal-cover.html">Min Cover</a>
+      <a href="normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 2 · Schema Objects &amp; Storage</div>
+    <h1>Triggers — code that fires on data changes</h1>
+    <p>A <b>trigger</b> is procedural code the database runs <b>automatically</b> in response to an
+      <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code> on a table. It follows the
+      <b>Event → Condition → Action</b> model: an event fires it, an optional condition gates it, and an action
+      runs. Triggers enforce rules, keep audit logs, and maintain derived data — without the application having
+      to remember.</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="eca" class="active">Event → Condition → Action</button>
+    <button data-lesson="timing">BEFORE vs AFTER</button>
+    <button data-lesson="oldnew">OLD &amp; NEW</button>
+    <button data-lesson="granularity">Row vs statement</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Watch it fire</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>The SQL</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">trigger.sql</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>Trigger anatomy</h2>
+    <table class="tbl">
+      <thead><tr><th>Choice</th><th>Options</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>Timing</td><td><code>BEFORE</code> / <code>AFTER</code> / <code>INSTEAD OF</code></td><td>run before the change, after it, or replace it (on views)</td></tr>
+        <tr><td>Event</td><td><code>INSERT</code> / <code>UPDATE</code> / <code>DELETE</code></td><td>which modification fires it</td></tr>
+        <tr><td>Granularity</td><td><code>FOR EACH ROW</code> / statement</td><td>once per affected row, or once per statement</td></tr>
+        <tr><td>Pseudo-rows</td><td><code>OLD</code> / <code>NEW</code></td><td>the row values before / after the change</td></tr>
+        <tr><td>Condition</td><td><code>WHEN (…)</code></td><td>optional guard — action runs only if true</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li>Referencing <code>NEW</code> in a <code>DELETE</code> trigger or <code>OLD</code> in an <code>INSERT</code> trigger — those pseudo-rows don't exist there.</li>
+          <li>Trying to modify <code>NEW</code> in an <code>AFTER</code> trigger — too late; the row is already written. Modify it in <code>BEFORE</code>.</li>
+          <li>Triggers that update the same table can <b>cascade</b> and even recurse — easy to cause loops.</li>
+          <li>Hidden business logic in triggers can be hard to debug; document them well.</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>Remember <b>E-C-A</b>: Event fires it, Condition (<code>WHEN</code>) gates it, Action runs.</li>
+          <li><code>INSERT</code> → only <code>NEW</code>; <code>DELETE</code> → only <code>OLD</code>; <code>UPDATE</code> → both.</li>
+          <li><code>BEFORE</code> = validate/modify the incoming row; <code>AFTER</code> = log/cascade once it's stored.</li>
+          <li><code>FOR EACH ROW</code> fires N times for an N-row statement; statement-level fires once.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="indexing.html">← Indexing</a>
+    <a class="btn btn-primary" href="../index.html">Back to syllabus →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Triggers</span><span style="font-family:var(--mono)">BEFORE/AFTER · OLD/NEW · FOR EACH ROW</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+/* ---------- flow + box helpers ---------- */
+function stage(label, sub, kind){
+  const m={
+    idle:['var(--border-2)','var(--surface)','var(--ink-muted)'],
+    event:['var(--blue)','rgba(96,165,250,.12)','var(--ink)'],
+    cond:['var(--gold)','rgba(251,191,36,.13)','var(--ink)'],
+    action:['var(--emerald)','rgba(52,211,153,.14)','var(--ink)'],
+    reject:['var(--rose)','rgba(251,113,133,.13)','var(--ink)']
+  };
+  const [bd,bg,fg]=m[kind]||m.idle;
+  return `<div style="min-width:120px;flex:1;padding:.6rem .8rem;border:1px solid ${bd};background:${bg};color:${fg};
+    border-radius:10px;font-family:var(--mono);font-size:.8rem;text-align:center">
+    <b>${label}</b>${sub?`<div style="font-size:.66rem;color:var(--ink-muted);margin-top:.15rem">${sub}</div>`:''}</div>`;
+}
+function flowbar(stages){
+  return `<div style="display:flex;align-items:stretch;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem">`+
+    stages.map((s,i)=> (i?`<div style="align-self:center;color:var(--ink-muted)">▸</div>`:'')+stage(s[0],s[1],s[2])).join('')+`</div>`;
+}
+function pill(text,kind){
+  const c={new:'var(--emerald)',old:'var(--rose)',both:'var(--violet)',info:'var(--ink-muted)'}[kind]||'var(--ink-muted)';
+  return `<span style="display:inline-block;font-family:var(--mono);font-size:.78rem;padding:.25rem .6rem;border-radius:7px;
+    border:1px solid ${c};color:${c};background:transparent;margin:.15rem .3rem .15rem 0">${text}</span>`;
+}
+const EMP={cols:["id","name","salary"], rows:[[1,"Ava",50],[2,"Ben",80]]};
+
+const LESSONS={
+eca:{
+  title:"Event → Condition → Action",
+  body:"Every trigger is bound to an <b>event</b> (a modification on a table). When that event happens the "+
+       "database fires the trigger, evaluates an optional <b>condition</b> (<code>WHEN</code>), and if it holds, "+
+       "runs the <b>action</b>. Here, every new hire is logged to an audit table automatically.",
+  analogy:"<b>Like a motion-sensor light:</b> motion (event) at night (condition) turns the light on (action) — "+
+          "no one flips a switch.",
+  fname:"audit_trigger.sql",
+  codeIntro:"An AFTER INSERT trigger that writes an audit-log row every time an employee is added.",
+  legend:[["event","event"],["cond","condition"],["action","action"]],
+  code:`-- Log every new hire automatically
+CREATE TRIGGER trg_audit_hire
+AFTER INSERT ON Employee
+FOR EACH ROW
+WHEN (NEW.salary > 0)                       -- condition
+BEGIN
+  INSERT INTO AuditLog(action, emp, detail)
+  VALUES ('HIRE', NEW.name, NEW.salary);    -- action
+END;`,
+  build(){
+    const log0=[];
+    return [
+      {note:"State before: Employee has 2 rows; AuditLog is empty. An INSERT is about to run.",
+        view:()=>tables(EMP.rows, log0)+pending("INSERT INTO Employee VALUES (3, 'Cy', 60)")},
+      {note:"<b>EVENT:</b> the INSERT on Employee fires <code>trg_audit_hire</code>.",
+        view:()=>flowbar([["INSERT","event on Employee","event"],["WHEN","NEW.salary>0","idle"],["ACTION","log it","idle"]])+tables(EMP.rows,log0)},
+      {note:"<b>CONDITION:</b> evaluate <code>WHEN (NEW.salary > 0)</code> → 60 > 0 → true, so proceed.",
+        view:()=>flowbar([["INSERT","event","event"],["WHEN","60 > 0 ✓","cond"],["ACTION","log it","idle"]])+
+          `<div>${pill("NEW.name = Cy","new")}${pill("NEW.salary = 60","new")}</div>`+tables(EMP.rows,log0)},
+      {note:"<b>ACTION:</b> the trigger inserts a row into AuditLog using the NEW values.",
+        view:()=>flowbar([["INSERT","event","event"],["WHEN","true","cond"],["ACTION","INSERT AuditLog","action"]])+
+          tables([...EMP.rows,[3,"Cy",60]], [["HIRE","Cy","60"]], 2, 0)},
+      {note:"Result: the new employee is stored AND an audit row appears — automatically, every time.",
+        view:()=>tables([...EMP.rows,[3,"Cy",60]], [["HIRE","Cy","60"]], 2, 0)}
+    ];
+  }
+},
+timing:{
+  title:"BEFORE vs AFTER — when the trigger runs",
+  body:"<b>BEFORE</b> triggers run <i>before</i> the row is written, so they can <b>validate or modify</b> the "+
+       "incoming <code>NEW</code> row (or reject it). <b>AFTER</b> triggers run once the change is safely "+
+       "stored — ideal for logging and cascading to other tables.",
+  analogy:"<b>BEFORE = airport security screening you before boarding</b> (can stop or adjust you). "+
+          "<b>AFTER = the boarding log recorded once you're on the plane.</b>",
+  fname:"before_after.sql",
+  codeIntro:"A BEFORE trigger validates salary; an AFTER trigger logs. See how timing changes what's possible.",
+  legend:[["event","incoming row"],["reject","rejected by BEFORE"],["action","stored / logged"]],
+  code:`-- BEFORE: validate or fix the incoming row
+CREATE TRIGGER trg_check_salary
+BEFORE INSERT ON Employee
+FOR EACH ROW
+WHEN (NEW.salary < 0)
+BEGIN
+  SELECT RAISE(ABORT, 'salary cannot be negative');  -- reject
+END;
+
+-- AFTER: react once the row is safely written
+CREATE TRIGGER trg_log
+AFTER INSERT ON Employee
+FOR EACH ROW
+BEGIN INSERT INTO AuditLog VALUES ('HIRE', NEW.name, NEW.salary); END;`,
+  build(){
+    return [
+      {note:"An INSERT arrives with a bad value: salary = −10. The BEFORE trigger runs first.",
+        view:()=>flowbar([["INSERT","NEW.salary = −10","event"],["BEFORE","validate","idle"],["WRITE","store row","idle"]])+
+          `<div>${pill("NEW.salary = −10","new")}</div>`+tables(EMP.rows,[])},
+      {note:"<b>BEFORE</b> sees <code>NEW.salary &lt; 0</code> → it aborts the insert. The row is never stored.",
+        view:()=>flowbar([["INSERT","NEW.salary = −10","event"],["BEFORE","−10 < 0 → ABORT","reject"],["WRITE","blocked","idle"]])+
+          `<div style="color:var(--rose);font-family:var(--mono);font-size:.84rem;padding:.4rem 0">✗ rejected — Employee unchanged</div>`+tables(EMP.rows,[])},
+      {note:"Now a valid INSERT (salary = 60). BEFORE passes, the row is written…",
+        view:()=>flowbar([["INSERT","NEW.salary = 60","event"],["BEFORE","60 ≥ 0 ✓","cond"],["WRITE","stored","action"]])+
+          tables([...EMP.rows,[3,"Cy",60]],[],2)},
+      {note:"…then the <b>AFTER</b> trigger fires on the now-stored row and appends the audit log.",
+        view:()=>flowbar([["WRITE","row stored","action"],["AFTER","fires next","action"],["LOG","AuditLog +1","action"]])+
+          tables([...EMP.rows,[3,"Cy",60]],[["HIRE","Cy","60"]],2,0)}
+    ];
+  }
+},
+oldnew:{
+  title:"OLD and NEW — the before/after pseudo-rows",
+  body:"Inside a row-level trigger you can read two pseudo-rows: <code>OLD</code> (values before the change) and "+
+       "<code>NEW</code> (values after). Which exist depends on the event: <b>INSERT</b> has only NEW, "+
+       "<b>DELETE</b> has only OLD, and <b>UPDATE</b> has both — perfect for logging exactly what changed.",
+  analogy:"<b>Like 'track changes' in a document:</b> OLD is the struck-through original, NEW is the replacement "+
+          "— UPDATE shows both side by side.",
+  fname:"old_new.sql",
+  codeIntro:"An UPDATE trigger logs the salary change using both OLD and NEW.",
+  legend:[["old","OLD (before)"],["new","NEW (after)"],["action","logged delta"]],
+  code:`-- Record every raise, with the exact delta
+CREATE TRIGGER trg_raise_log
+AFTER UPDATE OF salary ON Employee
+FOR EACH ROW
+BEGIN
+  INSERT INTO AuditLog(action, emp, detail)
+  VALUES ('RAISE', NEW.name,
+          OLD.salary || ' -> ' || NEW.salary);   -- both pseudo-rows
+END;`,
+  build(){
+    return [
+      {note:"Each event exposes different pseudo-rows. First, the rule of thumb:",
+        view:()=>`<div style="display:flex;flex-direction:column;gap:.6rem">
+          <div>INSERT &nbsp; ${pill("NEW ✓","new")} ${pill("OLD ✗","info")}</div>
+          <div>DELETE &nbsp; ${pill("OLD ✓","old")} ${pill("NEW ✗","info")}</div>
+          <div>UPDATE &nbsp; ${pill("OLD ✓","old")} ${pill("NEW ✓","new")}</div></div>`},
+      {note:"Ava gets a raise: <code>UPDATE Employee SET salary=60 WHERE id=1</code>. The trigger sees both rows.",
+        view:()=>`<div>${pill("OLD.salary = 50","old")}${pill("NEW.salary = 60","new")}</div>`+
+          tables([[1,"Ava",60],[2,"Ben",80]],[],0)},
+      {note:"It logs the delta using OLD and NEW together: '50 -&gt; 60'.",
+        view:()=>flowbar([["UPDATE","salary 50→60","event"],["AFTER","read OLD & NEW","action"],["LOG","'50 -> 60'","action"]])+
+          tables([[1,"Ava",60],[2,"Ben",80]],[["RAISE","Ava","50 -> 60"]],0,0)}
+    ];
+  }
+},
+granularity:{
+  title:"FOR EACH ROW vs statement-level",
+  body:"A <b>row-level</b> trigger (<code>FOR EACH ROW</code>) fires once for <i>every</i> row the statement "+
+       "touches. A <b>statement-level</b> trigger fires exactly once per statement, no matter how many rows "+
+       "change. One UPDATE hitting 3 rows = 3 row-level firings, or 1 statement-level firing.",
+  analogy:"<b>Row-level = stamping each parcel on a conveyor;</b> <b>statement-level = one receipt for the whole "+
+          "shipment.</b>",
+  fname:"granularity.sql",
+  codeIntro:"A single UPDATE raises 3 salaries. Compare how many times each trigger style fires.",
+  legend:[["event","affected row"],["action","trigger firing"]],
+  code:`-- One statement, three affected rows:
+UPDATE Employee SET salary = salary + 10;   -- 3 rows match
+
+-- Row-level trigger  → fires 3 times (one per row)
+-- Statement trigger  → fires 1 time  (once total)`,
+  build(){
+    const after=[[1,"Ava",60],[2,"Ben",90],[3,"Cy",70]];
+    const before=[[1,"Ava",50],[2,"Ben",80],[3,"Cy",60]];
+    return [
+      {note:"The UPDATE matches 3 rows (each salary +10).",
+        view:()=>tables(before,[],null)+pending("UPDATE Employee SET salary = salary + 10")},
+      {note:"<b>FOR EACH ROW:</b> the trigger fires once per affected row → 3 firings, 3 audit entries.",
+        view:()=>tables(after,[["UPD","Ava","+10"],["UPD","Ben","+10"],["UPD","Cy","+10"]],null,[0,1,2])+
+          `<div style="font-family:var(--mono);font-size:.82rem;color:var(--emerald);padding:.4rem 0">row-level → fired 3×</div>`},
+      {note:"<b>Statement-level:</b> the same UPDATE fires the trigger exactly once → a single entry.",
+        view:()=>tables(after,[["UPD","(3 rows)","batch"]],null,[0])+
+          `<div style="font-family:var(--mono);font-size:.82rem;color:var(--blue);padding:.4rem 0">statement-level → fired 1×</div>`}
+    ];
+  }
+}
+};
+
+/* render Employee + AuditLog side by side. empHi/logHi: index(es) to highlight */
+function tables(empRows, logRows, empHi, logHi){
+  const eClass=empRows.map((_,i)=> sameSet(empHi,i)?'focus':'');
+  const emp=table({caption:"Employee",cols:EMP.cols,rows:empRows,rowClass:eClass});
+  const lClass=(logRows||[]).map((_,i)=> sameSet(logHi,i)?'keep':'');
+  const log=table({caption:"AuditLog",cols:["action","emp","detail"],
+    rows:(logRows&&logRows.length)?logRows:[["—","—","—"]], rowClass:(logRows&&logRows.length)?lClass:['dim']});
+  return `<div class="tbl-flow">${emp}<div class="flow-arrow">⚡</div>${log}</div>`;
+}
+function sameSet(h,i){ if(h==null) return false; return Array.isArray(h)? h.includes(i) : h===i; }
+function pending(sql){ return `<div style="margin-top:.7rem;font-family:var(--mono);font-size:.82rem;color:var(--gold);border:1px dashed var(--gold);border-radius:8px;padding:.5rem .7rem;background:rgba(251,191,36,.06)">pending ▸ ${sql}</div>`; }
+
+const player=new StepPlayer({
+  mount:document.getElementById("stage"), narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"), render:(s)=>s.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+const cmap={event:"var(--blue)",cond:"var(--gold)",action:"var(--emerald)",reject:"var(--rose)",
+  old:"var(--rose)",new:"var(--emerald)"};
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl"); codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>`<span><i style="background:${cmap[c]||'#888'}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("eca");
+</script>
+</body>
+</html>

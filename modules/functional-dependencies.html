@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Functional Dependencies · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html">Aggregates</a>
+      <a href="nested-queries.html">Subqueries</a>
+      <a href="correlated.html">Correlated</a>
+      <a href="set-operations.html">Set ops</a>
+      <a href="views.html">Views</a>
+      <a href="indexing.html">Indexing</a>
+      <a href="triggers.html">Triggers</a>
+      <a href="functional-dependencies.html" class="active">FDs</a>
+      <a href="keys.html">Keys</a>
+      <a href="minimal-cover.html">Min Cover</a>
+      <a href="normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 3 · Design Theory</div>
+    <h1>Functional Dependencies &amp; Attribute Closure</h1>
+    <p>A functional dependency <code>X → Y</code> says: whenever two rows agree on <b>X</b>, they must agree on
+      <b>Y</b> — <b>X determines Y</b>. FDs are the raw material of schema design. From a set of FDs,
+      <b>Armstrong's axioms</b> let us infer new ones, and the <b>attribute-closure</b> algorithm computes
+      everything an attribute set determines — the key tool for finding keys and normalizing.</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="fd" class="active">What is an FD</button>
+    <button data-lesson="axioms">Armstrong's axioms</button>
+    <button data-lesson="closure">Attribute closure X⁺</button>
+    <button data-lesson="use">Using the closure</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Work it through</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>The notation</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">fds.txt</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>Inference rules reference</h2>
+    <table class="tbl">
+      <thead><tr><th>Rule</th><th>Statement</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr><td>Reflexivity</td><td>if Y ⊆ X then <code>X → Y</code> (trivial FD)</td><td>axiom</td></tr>
+        <tr><td>Augmentation</td><td>if <code>X → Y</code> then <code>XZ → YZ</code></td><td>axiom</td></tr>
+        <tr><td>Transitivity</td><td>if <code>X → Y</code> and <code>Y → Z</code> then <code>X → Z</code></td><td>axiom</td></tr>
+        <tr><td>Union</td><td>if <code>X → Y</code> and <code>X → Z</code> then <code>X → YZ</code></td><td>derived</td></tr>
+        <tr><td>Decomposition</td><td>if <code>X → YZ</code> then <code>X → Y</code> and <code>X → Z</code></td><td>derived</td></tr>
+        <tr><td>Pseudotransitivity</td><td>if <code>X → Y</code> and <code>WY → Z</code> then <code>WX → Z</code></td><td>derived</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li>An FD is a constraint on <b>all</b> legal states, not something you can "prove" from one sample table — a table can only <i>violate</i> it.</li>
+          <li><code>X → Y</code> does <b>not</b> imply <code>Y → X</code>. Determination is one-directional.</li>
+          <li>Confusing the closure of attributes <code>X⁺</code> (a set of attributes) with the closure of FDs <code>F⁺</code> (a set of FDs).</li>
+          <li>Forgetting to re-scan all FDs after adding attributes — the closure loop repeats until nothing changes.</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>The three Armstrong axioms (reflexivity, augmentation, transitivity) are <b>sound and complete</b> — everything else derives from them.</li>
+          <li><code>X → Y</code> is implied by F  ⟺  <code>Y ⊆ X⁺</code>. This single test answers most questions.</li>
+          <li><code>X</code> is a <b>superkey</b>  ⟺  <code>X⁺</code> = all attributes of R.</li>
+          <li>Closure is the engine behind finding keys (next module) and checking normal forms.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="triggers.html">← Triggers</a>
+    <a class="btn btn-primary" href="keys.html">Next: Keys from FDs →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Functional Dependencies</span><span style="font-family:var(--mono)">X → Y · Armstrong · X⁺</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+const ALL=["A","B","C","D","E"];
+/* FD set F = { A→B, B→C, CD→E, A→D } */
+const F=[
+  {lhs:["A"],rhs:["B"],label:"A → B"},
+  {lhs:["B"],rhs:["C"],label:"B → C"},
+  {lhs:["C","D"],rhs:["E"],label:"CD → E"},
+  {lhs:["A"],rhs:["D"],label:"A → D"}
+];
+
+/* ---- generic, correct closure algorithm ---- */
+function computeClosure(X, fds){
+  const cl=new Set(X); const trace=[];
+  let changed=true;
+  while(changed){ changed=false;
+    for(let i=0;i<fds.length;i++){
+      const {lhs,rhs}=fds[i];
+      if(lhs.every(a=>cl.has(a)) && !rhs.every(a=>cl.has(a))){
+        const added=rhs.filter(a=>!cl.has(a)); added.forEach(a=>cl.add(a));
+        trace.push({fd:i, added, snapshot:[...cl]}); changed=true;
+      }
+    }
+  }
+  return {closure:[...cl], trace};
+}
+
+/* ---- render helpers ---- */
+function pills(inSet, justAdded){
+  return `<div style="display:flex;gap:.4rem;flex-wrap:wrap">`+ALL.map(a=>{
+    const isIn=inSet.includes(a), isNew=(justAdded||[]).includes(a);
+    const bd=isNew?'var(--gold)':isIn?'var(--emerald)':'var(--border)';
+    const bg=isNew?'rgba(251,191,36,.16)':isIn?'rgba(52,211,153,.13)':'transparent';
+    const fg=isIn?'var(--ink)':'var(--ink-muted)';
+    const op=isIn?'':'opacity:.45;';
+    return `<div style="${op}min-width:34px;text-align:center;padding:.35rem .5rem;border:1px solid ${bd};background:${bg};color:${fg};border-radius:8px;font-family:var(--mono);font-weight:700">${a}</div>`;
+  }).join('')+`</div>`;
+}
+function fdListView(activeFd, usedFds){
+  return `<div style="display:flex;flex-direction:column;gap:.35rem">`+F.map((f,i)=>{
+    const on=i===activeFd, used=(usedFds||[]).includes(i);
+    const bd=on?'var(--gold)':used?'var(--emerald)':'var(--border)';
+    const bg=on?'rgba(251,191,36,.13)':used?'rgba(52,211,153,.08)':'var(--surface-2)';
+    return `<div style="padding:.4rem .7rem;border:1px solid ${bd};background:${bg};border-radius:8px;font-family:var(--mono);font-size:.82rem;color:var(--ink-dim);display:flex;justify-content:space-between">
+      <span>${f.label}</span>${on?'<span style="color:var(--gold)">◀ apply</span>':used?'<span style="color:var(--emerald)">✓</span>':''}</div>`;
+  }).join('')+`</div>`;
+}
+function closurePanel(setNow, justAdded, activeFd, usedFds, title){
+  return `<div style="display:flex;flex-direction:column;gap:1rem">
+    <div><div style="font-family:var(--mono);font-size:.72rem;color:var(--ink-muted);margin-bottom:.4rem">${title||'current closure'}</div>${pills(setNow,justAdded)}</div>
+    <div><div style="font-family:var(--mono);font-size:.72rem;color:var(--ink-muted);margin-bottom:.4rem">FD set F</div>${fdListView(activeFd,usedFds)}</div></div>`;
+}
+function fdBox(text,kind){
+  const c={given:'var(--blue)',derived:'var(--emerald)',mid:'var(--gold)'}[kind]||'var(--ink-muted)';
+  return `<div style="display:inline-block;padding:.45rem .8rem;border:1px solid ${c};border-radius:9px;font-family:var(--mono);font-size:.88rem;color:var(--ink);background:rgba(255,255,255,.02)">${text}</div>`;
+}
+
+const LESSONS={
+fd:{
+  title:"X → Y : X determines Y",
+  body:"A functional dependency <code>X → Y</code> holds on a relation if every pair of rows that agree on all "+
+       "of <b>X</b> also agree on all of <b>Y</b>. In a Student table, <code>sid → name</code> holds because a "+
+       "student id always maps to exactly one name. A table can never <i>prove</i> an FD — but it can "+
+       "<b>violate</b> one, which tells you the FD doesn't hold.",
+  analogy:"<b>Like a lookup function:</b> feed in X and you always get back the same Y. Two identical inputs "+
+          "can't produce two different outputs.",
+  fname:"fd_intuition.txt",
+  codeIntro:"Notation: left side determines right side. Below, sid → name holds; a clash would break it.",
+  legend:[["#34D399","FD holds"],["#FB7185","violation"]],
+  code:`-- A functional dependency
+sid -> name        -- "sid determines name"
+
+-- Holds: equal sid  =>  equal name (always)
+-- Violated if any two rows share sid but differ on name.`,
+  build(){
+    const T={cols:["sid","name","course"],rows:[[1,"Ava","DB"],[1,"Ava","OS"],[2,"Ben","DB"]]};
+    const BAD={cols:["sid","name","course"],rows:[[1,"Ava","DB"],[1,"Ava","OS"],[1,"Cy","AI"]]};
+    return [
+      {note:"Does <code>sid → name</code> hold? Check rows that share a sid.",
+        view:()=>table({caption:"Student",...T})},
+      {note:"Rows 1 &amp; 2 both have sid=1 and both have name=Ava → consistent so far. ✓",
+        view:()=>table({caption:"sid=1 rows agree on name",...T, rowClass:["focus","focus",""]})},
+      {note:"All sid groups map to a single name, so <b>sid → name</b> is satisfied by this table.",
+        view:()=>table({caption:"sid → name holds",...T, rowClass:["keep","keep","keep"]})},
+      {note:"A <b>violation</b> would look like this: sid=1 mapping to two different names → sid → name fails.",
+        view:()=>table({caption:"⚠ violation — sid=1 → both Ava and Cy",...BAD, rowClass:["drop","","drop"]})}
+    ];
+  }
+},
+axioms:{
+  title:"Armstrong's axioms — inferring new FDs",
+  body:"From a given set of FDs we can <b>derive</b> others using inference rules. The three primary axioms — "+
+       "<b>reflexivity</b>, <b>augmentation</b>, and <b>transitivity</b> — are sound (only derive valid FDs) and "+
+       "complete (can derive every valid FD). Union, decomposition, and pseudotransitivity follow from them.",
+  analogy:"<b>Like logic rules:</b> a few trusted axioms let you chain known facts into new, guaranteed-true "+
+          "conclusions.",
+  fname:"axioms.txt",
+  codeIntro:"Transitivity is the workhorse — it chains FDs together. Watch A→B and B→C combine into A→C.",
+  legend:[["#60A5FA","given FD"],["#FBBF24","shared middle"],["#34D399","derived FD"]],
+  code:`-- Armstrong's axioms (primary)
+Reflexivity:   Y ⊆ X            ⊢  X -> Y
+Augmentation:  X -> Y           ⊢  XZ -> YZ
+Transitivity:  X -> Y, Y -> Z   ⊢  X -> Z
+
+-- Example (transitivity):
+A -> B ,  B -> C   ⊢   A -> C`,
+  build(){
+    return [
+      {note:"We're given two FDs: <code>A → B</code> and <code>B → C</code>.",
+        view:()=>`<div style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">${fdBox("A → B","given")}${fdBox("B → C","given")}</div>`},
+      {note:"They share the middle attribute <b>B</b>: A reaches B, and B reaches C.",
+        view:()=>`<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">${fdBox("A → <b style='color:var(--gold)'>B</b>","given")}<span style="color:var(--ink-muted)">+</span>${fdBox("<b style='color:var(--gold)'>B</b> → C","given")}</div>`},
+      {note:"By <b>transitivity</b>, A determines C through B → derive <code>A → C</code>.",
+        view:()=>`<div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">${fdBox("A → B","given")}${fdBox("B → C","given")}<span style="color:var(--ink-muted);font-size:1.2rem">⟹</span>${fdBox("A → C","derived")}</div>`},
+      {note:"The derived rules — Union, Decomposition, Pseudotransitivity — all follow from the three axioms.",
+        view:()=>`<div style="display:flex;flex-direction:column;gap:.5rem">
+          ${fdBox("Union:  X→Y, X→Z  ⟹  X→YZ","mid")}
+          ${fdBox("Decomposition:  X→YZ  ⟹  X→Y, X→Z","mid")}
+          ${fdBox("Pseudotransitivity:  X→Y, WY→Z  ⟹  WX→Z","mid")}</div>`}
+    ];
+  }
+},
+closure:{
+  title:"Attribute closure X⁺ — everything X determines",
+  body:"The <b>closure</b> of an attribute set X, written <code>X⁺</code>, is the set of all attributes "+
+       "functionally determined by X under F. The algorithm: start with X, then repeatedly add the right side "+
+       "of any FD whose left side is already inside the set — until nothing new can be added.",
+  analogy:"<b>Like a chain reaction:</b> X 'activates' some attributes, which satisfy more FDs, activating still "+
+          "more — until the reaction settles.",
+  fname:"closure_algo.txt",
+  codeIntro:"Compute A⁺ for R(A,B,C,D,E) with F = {A→B, B→C, CD→E, A→D}. Watch the set grow.",
+  legend:[["#34D399","in closure"],["#FBBF24","just added"],["#FBBF24","FD applied"]],
+  code:`closure(X, F):
+  result := X
+  repeat:
+    for each FD  L -> R  in F:
+      if L ⊆ result:  result := result ∪ R
+  until result stops changing
+  return result        -- this is X⁺`,
+  build(){
+    const start=["A"];
+    const {trace, closure}=computeClosure(start, F);
+    const steps=[{note:`Start the closure with the input set: A⁺ = {A}. Nothing applied yet.`,
+      view:()=>closurePanel(["A"],["A"],null,[],"A⁺ (initial)")}];
+    const used=[];
+    trace.forEach((t,k)=>{
+      const before=t.snapshot.filter(a=>!t.added.includes(a));
+      steps.push({note:`<code>${F[t.fd].label}</code>: its left side is already in the set → add <b>${t.added.join(", ")}</b>.`,
+        view:()=>closurePanel(before, [], t.fd, used.slice(), `applying ${F[t.fd].label}`)});
+      used.push(t.fd);
+      steps.push({note:`A⁺ is now {${t.snapshot.join(", ")}}.`,
+        view:()=>closurePanel(t.snapshot.slice(), t.added.slice(), null, used.slice(), "A⁺ (growing)")});
+    });
+    steps.push({note:`No FD can add anything new. <b>A⁺ = {${closure.join(", ")}}</b> — A determines every attribute.`,
+      view:()=>closurePanel(closure.slice(), [], null, used.slice(), "A⁺ (final)")});
+    return steps;
+  }
+},
+use:{
+  title:"Using the closure — implication & superkeys",
+  body:"Closure answers the two questions that drive schema design. <b>Is an FD implied?</b> "+
+       "<code>X → Y</code> holds iff <code>Y ⊆ X⁺</code>. <b>Is X a superkey?</b> Yes iff "+
+       "<code>X⁺</code> equals all attributes of R. One algorithm, both answers.",
+  analogy:"<b>Like checking reachability:</b> compute everywhere you can get from X; if your destination is in "+
+          "that set, it's reachable (implied); if you can reach <i>everywhere</i>, X is a key.",
+  fname:"closure_uses.txt",
+  codeIntro:"Two tests against R(A,B,C,D,E), F = {A→B, B→C, CD→E, A→D}.",
+  legend:[["#34D399","in closure / yes"],["#FB7185","not in closure / no"]],
+  code:`-- Test 1: is  A -> E  implied?
+A+ = {A,B,C,D,E}      E ∈ A+   =>  YES, implied.
+
+-- Test 2: is  B  a superkey?
+B+ = {B,C}            B+ ≠ all  =>  NO, not a superkey.
+
+-- Test 3: is  A  a superkey?
+A+ = {A,B,C,D,E} = R  =>  YES, A is a (candidate) key.`,
+  build(){
+    const aPlus=computeClosure(["A"],F).closure;       // all
+    const bPlus=computeClosure(["B"],F).closure;       // {B,C}
+    return [
+      {note:"<b>Implication test:</b> is <code>A → E</code> implied? Compute A⁺ and check whether E is inside.",
+        view:()=>`<div style="font-family:var(--mono);font-size:.82rem;color:var(--ink-muted);margin-bottom:.5rem">A⁺ = {${aPlus.join(", ")}}</div>`+pills(aPlus,["E"])},
+      {note:"E ∈ A⁺ → <b style='color:var(--emerald)'>A → E is implied ✓</b>.",
+        view:()=>`<div style="color:var(--emerald);font-family:var(--mono);padding:.3rem 0">E ∈ A⁺  ⟹  A → E holds</div>`+pills(aPlus,["E"])},
+      {note:"<b>Superkey test for B:</b> compute B⁺. B → C, but C alone triggers nothing further.",
+        view:()=>`<div style="font-family:var(--mono);font-size:.82rem;color:var(--ink-muted);margin-bottom:.5rem">B⁺ = {${bPlus.join(", ")}}</div>`+pills(bPlus,[])},
+      {note:"B⁺ = {B, C} ≠ all attributes → <b style='color:var(--rose)'>B is NOT a superkey ✗</b>.",
+        view:()=>`<div style="color:var(--rose);font-family:var(--mono);padding:.3rem 0">B⁺ misses A, D, E  ⟹  not a key</div>`+pills(bPlus,[])},
+      {note:"But A⁺ = all of R → <b style='color:var(--emerald)'>A IS a superkey</b> (and a candidate key). This is the bridge to the next module.",
+        view:()=>`<div style="color:var(--emerald);font-family:var(--mono);padding:.3rem 0">A⁺ = R  ⟹  A is a (candidate) key</div>`+pills(aPlus,[])}
+    ];
+  }
+}
+};
+
+const player=new StepPlayer({
+  mount:document.getElementById("stage"), narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"), render:(s)=>s.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl"); codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>`<span><i style="background:${c}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("fd");
+</script>
+</body>
+</html>

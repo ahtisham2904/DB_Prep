@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Correlated Subqueries · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html">Aggregates</a>
+      <a href="nested-queries.html">Subqueries</a>
+      <a href="correlated.html" class="active">Correlated</a>
+      <a href="set-operations.html">Set ops</a>
+      <a href="views.html">Views</a>
+      <a href="indexing.html">Indexing</a>
+      <a href="triggers.html">Triggers</a>
+      <a href="functional-dependencies.html">FDs</a>
+      <a href="keys.html">Keys</a>
+      <a href="minimal-cover.html">Min Cover</a>
+      <a href="normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 1 · Advanced Querying</div>
+    <h1>Correlated Subqueries — EXISTS / NOT EXISTS</h1>
+    <p>A <b>correlated</b> subquery references a column from the outer query, so it can't be evaluated once —
+      it re-runs <b>for every outer row</b>. <code>EXISTS</code> simply asks "did the inner query return any
+      row?" and returns true/false. It's the natural tool for "customers who <i>have</i> ordered" and, with
+      <code>NOT EXISTS</code>, "customers who <i>never</i> ordered."</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="exists" class="active">EXISTS</button>
+    <button data-lesson="notexists">NOT EXISTS</button>
+    <button data-lesson="vsin">EXISTS vs IN</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Watch it execute</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>The SQL</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">correlated.sql</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>Correlated vs non-correlated</h2>
+    <table class="tbl">
+      <thead><tr><th></th><th>Non-correlated (last module)</th><th>Correlated (this module)</th></tr></thead>
+      <tbody>
+        <tr><td>Inner query references outer row?</td><td>No</td><td>Yes (e.g. <code>o.cust_id = c.id</code>)</td></tr>
+        <tr><td>How often it runs</td><td>Once, total</td><td>Once <b>per outer row</b></td></tr>
+        <tr><td>Returns</td><td>A set of values</td><td>EXISTS → just true/false</td></tr>
+        <tr><td>Typical operators</td><td><code>IN</code>, <code>ANY</code>, <code>ALL</code></td><td><code>EXISTS</code>, <code>NOT EXISTS</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li>Forgetting the correlation condition (<code>WHERE o.cust_id = c.id</code>) — without it EXISTS is true for every outer row.</li>
+          <li>Selecting real columns inside <code>EXISTS</code> — it only cares whether a row exists, so <code>SELECT 1</code> is idiomatic.</li>
+          <li>Reaching for <code>NOT IN</code> when NULLs are possible — use <code>NOT EXISTS</code>, which is NULL-safe.</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>Read EXISTS as: "for this outer row, does at least one matching inner row exist?"</li>
+          <li><code>NOT EXISTS</code> is the standard way to express "for all / none" (relational division).</li>
+          <li><code>EXISTS</code> can stop at the first matching row, so it's often efficient despite re-running.</li>
+          <li><code>EXISTS</code> handles NULLs correctly where <code>NOT IN</code> silently fails.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="nested-queries.html">← Nested Queries</a>
+    <a class="btn btn-primary" href="set-operations.html">Next: Set Operations →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Correlated Subqueries</span><span style="font-family:var(--mono)">EXISTS · NOT EXISTS · re-runs per row</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+const CUST={cols:["id","name"], rows:[[1,"Ava"],[2,"Ben"],[3,"Cy"],[4,"Dee"]]};
+const ORD ={cols:["oid","cust_id","amount"], rows:[[101,1,50],[102,1,30],[103,3,75]]};
+function ordersFor(id){ return ORD.rows.map((r,i)=>[r,i]).filter(([r])=>r[1]===id); }
+
+const LESSONS={
+exists:{
+  title:"EXISTS — re-run per row, ask 'any match?'",
+  body:"For each customer in the outer query, the inner query runs with that customer's <code>id</code> "+
+       "plugged in: <code>SELECT 1 FROM Orders o WHERE o.cust_id = c.id</code>. If it finds at least one "+
+       "order, <code>EXISTS</code> is true and the customer is kept.",
+  analogy:"<b>Like a teacher taking attendance by surname:</b> for each name on the roster (outer), they "+
+          "scan the sign-in sheet (inner) for a match — present or absent, one student at a time.",
+  fname:"exists.sql",
+  codeIntro:"Customers who have placed at least one order. The inner query re-runs for each of the 4 customers.",
+  legend:[["focus","current outer row"],["keep","EXISTS true → kept"],["drop","EXISTS false → dropped"]],
+  code:`-- Customers who have placed at least one order
+SELECT c.name
+FROM   Customer c
+WHERE  EXISTS ( SELECT 1
+                FROM   Orders o
+                WHERE  o.cust_id = c.id );   -- correlation`,
+  build(){
+    const steps=[];
+    steps.push({note:"Two tables. EXISTS will run the inner query once per Customer row, using that row's id.",
+      view:()=>two(table({caption:"Customer (outer)",...CUST}), table({caption:"Orders (inner)",...ORD}))});
+    CUST.rows.forEach((c,ci)=>{
+      const matches=ordersFor(c[0]);
+      const has=matches.length>0;
+      const ordClass=ORD.rows.map((r)=> r[1]===c[0]?'keep':'dim');
+      const custClass=CUST.rows.map((_,i)=> i===ci?'focus':'dim');
+      steps.push({note:`Outer row <b>${c[1]}</b> (id=${c[0]}): run inner with <code>cust_id = ${c[0]}</code> → ${has?`<b style="color:var(--emerald)">${matches.length} order(s) found → EXISTS = true</b>`:`<b style="color:var(--rose)">no orders → EXISTS = false</b>`}.`,
+        view:()=>two(
+          table({caption:"Customer (outer)",...CUST, rowClass:custClass}),
+          table({caption:`Orders WHERE cust_id=${c[0]}`,...ORD, rowClass:ordClass}))+verdict(has)});
+    });
+    steps.push({note:"Keep only customers where EXISTS was true. Result: Ava and Cy.",
+      view:()=>table({caption:"result",cols:["name"],rows:[["Ava"],["Cy"]],rowClass:["keep","keep"]})});
+    return steps;
+  }
+},
+notexists:{
+  title:"NOT EXISTS — the customers with no match",
+  body:"<code>NOT EXISTS</code> simply negates the test: keep a customer only when the inner query finds "+
+       "<b>nothing</b>. This is the clean, NULL-safe way to ask 'who has never ordered?' — and the backbone "+
+       "of 'for all' style queries.",
+  analogy:"<b>Like flagging students who never signed in:</b> for each name, you scan the sheet and keep them "+
+          "only if there's <i>no</i> matching entry.",
+  fname:"not_exists.sql",
+  codeIntro:"Customers who have never ordered. Same correlation, kept when the inner query is empty.",
+  legend:[["focus","current outer row"],["keep","NOT EXISTS true → kept"],["drop","has orders → dropped"]],
+  code:`-- Customers who have never placed an order
+SELECT c.name
+FROM   Customer c
+WHERE  NOT EXISTS ( SELECT 1
+                    FROM   Orders o
+                    WHERE  o.cust_id = c.id );`,
+  build(){
+    const steps=[];
+    steps.push({note:"Same two tables. Now we keep a customer when the inner query returns nothing.",
+      view:()=>two(table({caption:"Customer (outer)",...CUST}), table({caption:"Orders (inner)",...ORD}))});
+    CUST.rows.forEach((c,ci)=>{
+      const matches=ordersFor(c[0]); const empty=matches.length===0;
+      const ordClass=ORD.rows.map((r)=> r[1]===c[0]?'drop':'dim');
+      const custClass=CUST.rows.map((_,i)=> i===ci?'focus':'dim');
+      steps.push({note:`<b>${c[1]}</b> (id=${c[0]}): inner finds ${matches.length} order(s) → ${empty?`<b style="color:var(--emerald)">empty → NOT EXISTS = true → keep</b>`:`<b style="color:var(--rose)">non-empty → NOT EXISTS = false → drop</b>`}.`,
+        view:()=>two(
+          table({caption:"Customer (outer)",...CUST, rowClass:custClass}),
+          table({caption:`Orders WHERE cust_id=${c[0]}`,...ORD, rowClass:ordClass}))+verdict(empty)});
+    });
+    steps.push({note:"Result: Ben and Dee — the customers with no orders at all.",
+      view:()=>table({caption:"result",cols:["name"],rows:[["Ben"],["Dee"]],rowClass:["keep","keep"]})});
+    return steps;
+  }
+},
+vsin:{
+  title:"EXISTS vs IN — and the NULL trap",
+  body:"<code>IN</code> and <code>EXISTS</code> can express similar queries, but they behave differently with "+
+       "<code>NULL</code>s. <code>NOT IN</code> breaks if the subquery yields a NULL (every comparison becomes "+
+       "UNKNOWN), while <code>NOT EXISTS</code> is unaffected. When NULLs are possible, prefer EXISTS.",
+  analogy:"<b>IN checks a finished list of values; EXISTS checks row-by-row.</b> A single blank entry poisons "+
+          "the NOT IN list, but NOT EXISTS just keeps scanning rows.",
+  fname:"exists_vs_in.sql",
+  codeIntro:"The same intent written two ways — and why NOT EXISTS is the safer of the two negations.",
+  legend:[["keep","safe / correct"],["drop","risky with NULLs"]],
+  code:`-- Equivalent when no NULLs are involved:
+SELECT name FROM Customer c
+WHERE  c.id IN (SELECT cust_id FROM Orders);          -- has ordered
+
+SELECT name FROM Customer c
+WHERE  EXISTS (SELECT 1 FROM Orders o
+               WHERE o.cust_id = c.id);                -- has ordered
+
+-- The negations are NOT equivalent if cust_id can be NULL:
+SELECT name FROM Customer c
+WHERE  c.id NOT IN (SELECT cust_id FROM Orders);       -- ⚠ NULL-fragile
+
+SELECT name FROM Customer c
+WHERE  NOT EXISTS (SELECT 1 FROM Orders o
+                   WHERE o.cust_id = c.id);             -- ✓ NULL-safe`,
+  build(){
+    return [
+      {note:"With <b>no NULLs</b>, <code>IN</code> and <code>EXISTS</code> give the same 'has ordered' result: Ava, Cy.",
+        view:()=>table({caption:"IN  ≡  EXISTS  (no NULLs)",cols:["name"],rows:[["Ava"],["Cy"]],rowClass:["keep","keep"]})},
+      {note:"Now suppose <code>Orders.cust_id</code> contains a <b>NULL</b>. The subquery set becomes {1, 1, 3, NULL}.",
+        view:()=>`<div style="font-family:var(--mono);font-size:.84rem;color:var(--ink-dim);padding:.4rem 0">subquery → { 1, 1, 3, <span style="color:var(--rose)">NULL</span> }</div>`+
+          table({caption:"Customer",...CUST})},
+      {note:"<code>NOT IN {…, NULL}</code> evaluates to UNKNOWN for <b>every</b> customer → the query returns <b>nothing</b>. ⚠️",
+        view:()=>table({caption:"NOT IN  →  empty (the trap)",cols:["name"],rows:[["(no rows)"]],rowClass:["drop"]})},
+      {note:"<code>NOT EXISTS</code> is unaffected — it correctly returns Ben and Dee. ✓",
+        view:()=>table({caption:"NOT EXISTS  →  correct",cols:["name"],rows:[["Ben"],["Dee"]],rowClass:["keep","keep"]})},
+    ];
+  }
+}
+};
+
+/* ---- helpers ---- */
+function two(a,b){ return `<div class="tbl-flow">${a}<div class="flow-arrow">⟲</div>${b}</div>`; }
+function verdict(ok){
+  return `<div style="margin-top:.6rem; font-family:var(--mono); font-size:.86rem; display:inline-block;
+    padding:.4rem .8rem; border-radius:8px; border:1px solid ${ok?'var(--emerald)':'var(--rose)'};
+    background:${ok?'rgba(52,211,153,.1)':'rgba(251,113,133,.1)'}; color:${ok?'var(--emerald)':'var(--rose)'}">
+    EXISTS → ${ok?'TRUE ✓':'FALSE ✗'}</div>`;
+}
+
+const player=new StepPlayer({
+  mount:document.getElementById("stage"), narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"), render:(s)=>s.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+const cmap={focus:"var(--gold)",keep:"var(--emerald)",drop:"var(--rose)"};
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl"); codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>`<span><i style="background:${cmap[c]||'#888'}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("exists");
+</script>
+</body>
+</html>

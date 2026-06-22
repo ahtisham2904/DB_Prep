@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Lab · Databases, visualized</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="favicon.svg">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <nav class="nav-links">
+      <a href="modules/aggregates.html">Aggregates</a>
+      <a href="modules/nested-queries.html">Subqueries</a>
+      <a href="modules/correlated.html">Correlated</a>
+      <a href="modules/set-operations.html">Set ops</a>
+      <a href="modules/views.html">Views</a>
+      <a href="modules/indexing.html">Indexing</a>
+      <a href="modules/triggers.html">Triggers</a>
+      <a href="modules/functional-dependencies.html">FDs</a>
+      <a href="modules/keys.html">Keys</a>
+      <a href="modules/minimal-cover.html">Min Cover</a>
+      <a href="modules/normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Aggregates · Subqueries · Indexing · Normalization · Transactions</div>
+      <h1>Watch the query <span class="hl">execute</span>, row by row.</h1>
+      <p class="lead">An interactive databases course where every <code style="font-family:var(--mono);color:var(--emerald)">SELECT</code>,
+        <code style="font-family:var(--mono);color:var(--emerald)">GROUP BY</code>, subquery, index and transaction is animated on
+        live tables — with the real SQL beside it. Press play and see exactly how the engine turns rows into results.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="modules/aggregates.html">Start with Aggregates →</a>
+        <a class="btn btn-ghost" href="#map">Browse all topics</a>
+      </div>
+      <div class="stripe">
+        <div><b>13</b><span>topics</span></div>
+        <div><b>50+</b><span>animated queries</span></div>
+        <div><b>SQL</b><span>real, runnable</span></div>
+        <div><b>0</b><span>setup — just open it</span></div>
+      </div>
+    </div>
+    <div class="hero-stage">
+      <div class="stage-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span style="margin-left:.5rem">query.sql — GROUP BY dept, AVG(salary)</span></div>
+      <div class="stage-body" id="heroStage"></div>
+    </div>
+  </section>
+
+  <section class="section" id="map">
+    <div class="eyebrow">The Course Map</div>
+    <h2 style="font-size:2rem; margin-bottom:.6rem">From queries to theory to transactions</h2>
+    <p style="color:var(--ink-muted); max-width:62ch">Each topic page follows the same rhythm: concept &amp; analogy →
+      animated execution on real tables with play / step / reset → synced narration → the real SQL → key rules →
+      pitfalls &amp; exam tips.</p>
+    <div class="progress-wrap"><div class="bar"><i id="progBar"></i></div><span id="progTxt"></span></div>
+
+    <!-- QUERYING -->
+    <h3 style="margin:2.3rem 0 1rem; font-size:1.05rem; color:var(--ink-dim)">
+      <span style="font-family:var(--mono); color:var(--blue); font-size:.78rem">PART 1</span><br>Advanced Querying</h3>
+    <div class="grid">
+      <a class="card" href="modules/aggregates.html"><span class="go">↗</span>
+        <span class="wk">Aggregates</span><div class="ic">Σ</div>
+        <h3>Aggregate Functions &amp; GROUP BY</h3>
+        <p>COUNT, SUM, AVG, MIN, MAX, then GROUP BY partitions and HAVING filters groups — animated end to end.</p>
+        <div class="tags"><span class="tag">GROUP BY</span><span class="tag">HAVING</span><span class="tag">WHERE vs HAVING</span></div></a>
+      <a class="card" href="modules/nested-queries.html"><span class="go">↗</span>
+        <span class="wk">Subqueries</span><div class="ic">⊂</div>
+        <h3>Nested Queries</h3>
+        <p>IN / NOT IN, ANY / ALL — how a subquery resolves to a set and feeds the outer query, step by step.</p>
+        <div class="tags"><span class="tag">IN/NOT IN</span><span class="tag">ANY · ALL</span></div></a>
+      <a class="card" href="modules/correlated.html"><span class="go">↗</span>
+        <span class="wk">Subqueries</span><div class="ic">⟲</div>
+        <h3>Correlated Subqueries</h3>
+        <p>EXISTS / NOT EXISTS — the inner query re-runs for every outer row, watched one row at a time.</p>
+        <div class="tags"><span class="tag">EXISTS</span><span class="tag">NOT EXISTS</span></div></a>
+      <a class="card" href="modules/set-operations.html"><span class="go">↗</span>
+        <span class="wk">Set ops</span><div class="ic">∪</div>
+        <h3>UNION · INTERSECT · MINUS</h3>
+        <p>Combining result sets, union compatibility, and how duplicates are handled — animated set by set.</p>
+        <div class="tags"><span class="tag">UNION</span><span class="tag">INTERSECT</span><span class="tag">MINUS</span></div></a>
+    </div>
+
+    <!-- SCHEMA OBJECTS -->
+    <h3 style="margin:2.3rem 0 1rem; font-size:1.05rem; color:var(--ink-dim)">
+      <span style="font-family:var(--mono); color:var(--blue); font-size:.78rem">PART 2</span><br>Schema Objects &amp; Storage</h3>
+    <div class="grid">
+      <a class="card" href="modules/views.html"><span class="go">↗</span>
+        <span class="wk">Views</span><div class="ic">▦</div>
+        <h3>Views</h3>
+        <p>Virtual tables — a stored query you select from like a real table; simplify, secure, and stay live.</p>
+        <div class="tags"><span class="tag">virtual table</span><span class="tag">CREATE VIEW</span><span class="tag">materialized</span></div></a>
+      <a class="card" href="modules/indexing.html"><span class="go">↗</span>
+        <span class="wk">Indexing</span><div class="ic">🔎</div>
+        <h3>Indexing</h3>
+        <p>Single-level ordered indexes, multilevel indexes and B+-trees — how lookups go from O(n) to O(log n).</p>
+        <div class="tags"><span class="tag">ordered index</span><span class="tag">multilevel</span><span class="tag">B+-tree</span></div></a>
+      <a class="card" href="modules/triggers.html"><span class="go">↗</span>
+        <span class="wk">Triggers</span><div class="ic">⚡</div>
+        <h3>Triggers</h3>
+        <p>Event → condition → action: code that fires automatically on INSERT/UPDATE/DELETE, with OLD &amp; NEW.</p>
+        <div class="tags"><span class="tag">BEFORE/AFTER</span><span class="tag">FOR EACH ROW</span><span class="tag">OLD/NEW</span></div></a>
+    </div>
+
+    <!-- DESIGN THEORY -->
+    <h3 style="margin:2.3rem 0 1rem; font-size:1.05rem; color:var(--ink-dim)">
+      <span style="font-family:var(--mono); color:var(--blue); font-size:.78rem">PART 3</span><br>Design Theory</h3>
+    <div class="grid">
+      <a class="card" href="modules/functional-dependencies.html"><span class="go">↗</span>
+        <span class="wk">FDs</span><div class="ic">→</div>
+        <h3>Functional Dependencies</h3>
+        <p>X → Y, Armstrong's inference rules, and the attribute-closure algorithm — animated as the set grows.</p>
+        <div class="tags"><span class="tag">X → Y</span><span class="tag">closure</span><span class="tag">axioms</span></div></a>
+      <a class="card" href="modules/keys.html"><span class="go">↗</span>
+        <span class="wk">Keys</span><div class="ic">🔑</div>
+        <h3>Keys from FDs</h3>
+        <p>Closures → candidate keys, attribute classification, and prime vs non-prime — with two keys found live.</p>
+        <div class="tags"><span class="tag">candidate key</span><span class="tag">superkey</span><span class="tag">prime</span></div></a>
+      <a class="card" href="modules/minimal-cover.html"><span class="go">↗</span>
+        <span class="wk">Minimal cover</span><div class="ic">≡</div>
+        <h3>Equivalent FDs &amp; Minimal Cover</h3>
+        <p>Prove two FD sets equivalent, then reduce to a canonical cover via the three standard steps.</p>
+        <div class="tags"><span class="tag">minimal cover</span><span class="tag">equivalence</span></div></a>
+      <a class="card" href="modules/normalization.html"><span class="go">↗</span>
+        <span class="wk">Normalization</span><div class="ic">⊞</div>
+        <h3>Normalization · 1NF → 3NF</h3>
+        <p>Decompose tables to remove anomalies: 1NF, 2NF, 3NF with worked, animated examples.</p>
+        <div class="tags"><span class="tag">1NF</span><span class="tag">2NF</span><span class="tag">3NF</span></div></a>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <h3 style="margin:2.3rem 0 1rem; font-size:1.05rem; color:var(--ink-dim)">
+      <span style="font-family:var(--mono); color:var(--blue); font-size:.78rem">PART 4</span><br>Transactions &amp; Concurrency</h3>
+    <div class="grid">
+      <a class="card soon"><span class="ribbon">in next build</span>
+        <span class="wk">Transactions</span><div class="ic">⇄</div>
+        <h3>Transaction Processing</h3>
+        <p>ACID properties, states, and schedules — why all-or-nothing matters.</p>
+        <div class="tags"><span class="tag">ACID</span><span class="tag">commit/rollback</span></div></a>
+      <a class="card soon"><span class="ribbon">in next build</span>
+        <span class="wk">Concurrency</span><div class="ic">🔒</div>
+        <h3>Concurrency Control</h3>
+        <p>Lost updates, locking, and Two-Phase Locking (2PL) to keep schedules serializable.</p>
+        <div class="tags"><span class="tag">locks</span><span class="tag">2PL</span><span class="tag">serializability</span></div></a>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">
+  <span>SQL Lab · a visual databases course — querying, design theory &amp; transactions.</span>
+  <span style="font-family:var(--mono)">Runs offline — just open <span class="kbd">index.html</span></span>
+</div></footer>
+
+<script src="js/common.js"></script>
+<script>
+/* hero: a looping GROUP BY animation */
+(function(){
+  const stage=document.getElementById("heroStage");
+  const src={cols:["name","dept","salary"], rows:[
+    ["Ava","Sales","50"],["Ben","Eng","80"],["Cy","Sales","60"],
+    ["Dee","Eng","90"],["Eli","HR","55"],["Finn","Sales","70"]]};
+  const groups={Sales:[0,2,5], Eng:[1,3], HR:[4]};
+  const gcol={Sales:1,Eng:2,HR:3};
+  const frames=[
+    ()=>table({caption:"Employee — raw rows", ...src}),
+    ()=>table({caption:"GROUP BY dept — partition rows", ...src,
+       group:src.rows.map((_,i)=>groups.Sales.includes(i)?1:groups.Eng.includes(i)?2:3)}),
+    ()=>table({caption:"AVG(salary) per group", cols:["dept","AVG(salary)"],
+       rows:[["Sales","60"],["Eng","85"],["HR","55"]], group:[1,2,3], cellClass:{'0-1':'agg','1-1':'agg','2-1':'agg'}}),
+    ()=>table({caption:"HAVING AVG(salary) > 58 — keep qualifying groups", cols:["dept","AVG(salary)"],
+       rows:[["Sales","60"],["Eng","85"],["HR","55"]], group:[1,2,3], rowClass:["keep","keep","drop"],
+       cellClass:{'0-1':'agg','1-1':'agg'}}),
+  ];
+  let f=0;
+  function tick(){ stage.innerHTML=frames[f](); f=(f+1)%frames.length; }
+  tick(); setInterval(tick, 1900);
+
+  const total=13, done=11;
+  document.getElementById("progTxt").textContent=`${done} of ${total} topics interactive`;
+  requestAnimationFrame(()=> document.getElementById("progBar").style.width=(done/total*100)+"%");
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Views · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html">Aggregates</a>
+      <a href="nested-queries.html">Subqueries</a>
+      <a href="correlated.html">Correlated</a>
+      <a href="set-operations.html">Set ops</a>
+      <a href="views.html" class="active">Views</a>
+      <a href="indexing.html">Indexing</a>
+      <a href="triggers.html">Triggers</a>
+      <a href="functional-dependencies.html">FDs</a>
+      <a href="keys.html">Keys</a>
+      <a href="minimal-cover.html">Min Cover</a>
+      <a href="normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 2 · Schema Objects &amp; Storage</div>
+    <h1>Views — virtual tables built from a query</h1>
+    <p>A <b>view</b> is a named, stored <code>SELECT</code> statement. You query it exactly like a table, but it
+      holds <b>no data of its own</b> — every time you read it, the database runs the underlying query against
+      the live base tables. Views simplify complex queries, hide sensitive columns, and give each user a tailored
+      window onto the data.</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="virtual" class="active">Virtual table</button>
+    <button data-lesson="simplify">Simplify &amp; secure</button>
+    <button data-lesson="live">Live, not a copy</button>
+    <button data-lesson="update">Updatable &amp; materialized</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Watch it execute</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>The SQL</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">view.sql</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>View vs table vs materialized view</h2>
+    <table class="tbl">
+      <thead><tr><th></th><th>Base table</th><th>View</th><th>Materialized view</th></tr></thead>
+      <tbody>
+        <tr><td>Stores data?</td><td>Yes</td><td>No — just a query</td><td>Yes — a saved snapshot</td></tr>
+        <tr><td>Always current?</td><td>Yes</td><td>Yes (runs live)</td><td>No — until refreshed</td></tr>
+        <tr><td>Read cost</td><td>direct</td><td>re-runs the query each time</td><td>fast (precomputed)</td></tr>
+        <tr><td>Main use</td><td>storage</td><td>abstraction &amp; security</td><td>performance on heavy queries</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li>Thinking a view stores rows — it doesn't; it re-executes its query on every access.</li>
+          <li>Trying to <code>INSERT/UPDATE</code> a view built on joins, <code>GROUP BY</code>, <code>DISTINCT</code>, or aggregates — generally <b>not updatable</b>.</li>
+          <li>Expecting a materialized view to be current — it's a snapshot until you <code>REFRESH</code> it.</li>
+          <li>Heavy views on views on views — each layer re-runs, which can get slow.</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>Define a view: <code>CREATE VIEW v AS SELECT …;</code> — query it like any table.</li>
+          <li>Views provide <b>logical data independence</b> and <b>security</b> (expose only chosen columns/rows).</li>
+          <li>A simple view (one table, no aggregation) is usually <b>updatable</b>; changes pass to the base table.</li>
+          <li><code>WITH CHECK OPTION</code> stops updates that would make a row vanish from the view.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="set-operations.html">← Set Operations</a>
+    <a class="btn btn-primary" href="../index.html">Back to syllabus →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Views</span><span style="font-family:var(--mono)">CREATE VIEW · virtual · live</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+const EMP={cols:["id","name","dept","salary"], rows:[
+  [1,"Ava","Sales",50],[2,"Ben","Eng",80],[3,"Cy","Sales",60],[4,"Dee","Eng",90],[5,"Eli","HR",55]]};
+const isEng=r=>r[2]==="Eng";
+
+const LESSONS={
+virtual:{
+  title:"A view is a stored query, not stored data",
+  body:"<code>CREATE VIEW EngStaff AS SELECT name, salary FROM Employee WHERE dept='Eng'</code> defines a "+
+       "virtual table. When you later run <code>SELECT * FROM EngStaff</code>, the database <b>substitutes</b> "+
+       "the stored query and runs it against the live Employee table — there is no separate copy of the rows.",
+  analogy:"<b>Like a saved search or a saved filter:</b> it remembers the recipe, not the results — re-cooking "+
+          "the dish fresh each time you open it.",
+  fname:"create_view.sql",
+  codeIntro:"Define EngStaff once, then query it like a table. The engine expands the view into its query.",
+  legend:[["dim","not selected by the view"],["keep","passes the view's filter"],["agg","projected columns"]],
+  code:`-- Define the view once
+CREATE VIEW EngStaff AS
+  SELECT name, salary
+  FROM   Employee
+  WHERE  dept = 'Eng';
+
+-- Then use it like a table
+SELECT * FROM EngStaff;`,
+  build(){
+    const engRows=EMP.rows.filter(isEng);
+    return [
+      {note:"The base table Employee holds the real rows.", view:()=>table({caption:"Employee (base table)",...EMP})},
+      {note:"<code>CREATE VIEW EngStaff</code> stores a query — it does <b>not</b> copy any rows yet.",
+        view:()=>table({caption:"Employee (base table)",...EMP})+viewDef()},
+      {note:"Now run <code>SELECT * FROM EngStaff</code>. The engine substitutes the view's query.",
+        view:()=>viewDef()+`<div class="flow-arrow" style="text-align:center">↓ expands to ↓</div>`+
+          `<div style="font-family:var(--mono);font-size:.82rem;color:var(--ink-dim);padding:.3rem 0">SELECT name, salary FROM Employee WHERE dept='Eng'</div>`},
+      {note:"Apply the filter <code>WHERE dept='Eng'</code> on the live base table.",
+        view:()=>table({caption:"Employee — filter dept='Eng'",...EMP, rowClass:EMP.rows.map(r=>isEng(r)?'keep':'dim')})},
+      {note:"Project the chosen columns (name, salary). This is what EngStaff 'contains'.",
+        view:()=>table({caption:"EngStaff (virtual)",cols:["name","salary"],rows:engRows.map(r=>[r[1],r[3]]),
+          rowClass:engRows.map(()=>'keep')})},
+    ];
+  }
+},
+simplify:{
+  title:"Simplify complex queries & hide sensitive data",
+  body:"Two big wins. <b>Abstraction:</b> wrap a gnarly multi-table query in a view, and everyone queries the "+
+       "simple view instead. <b>Security:</b> expose only safe columns/rows — e.g. a public directory view that "+
+       "omits <code>salary</code> entirely, so users of the view can never see it.",
+  analogy:"<b>Like a reception desk:</b> visitors talk to the front desk (the view) and get exactly the info "+
+          "they're allowed; the back office (base table) stays private.",
+  fname:"secure_view.sql",
+  codeIntro:"A directory view exposes name and dept but never salary — security through projection.",
+  legend:[["drop","column hidden by the view"],["keep","exposed by the view"]],
+  code:`-- Public directory: salary is never exposed
+CREATE VIEW Directory AS
+  SELECT name, dept          -- salary deliberately omitted
+  FROM   Employee;
+
+GRANT SELECT ON Directory TO public;   -- users see the view, not the table
+SELECT * FROM Directory;`,
+  build(){
+    return [
+      {note:"The base table includes a sensitive <code>salary</code> column.",
+        view:()=>table({caption:"Employee (base — salary is sensitive)",...EMP,
+          cellClass:Object.fromEntries(EMP.rows.map((_,i)=>[i+'-3','key']))})},
+      {note:"The Directory view selects only <code>name</code> and <code>dept</code> — salary is dropped.",
+        view:()=>table({caption:"Employee — view projects name, dept only",...EMP,
+          cellClass:Object.fromEntries(EMP.rows.flatMap((_,i)=>[[i+'-0',''],[i+'-3','']]))})
+          .replace(/<th>salary<\/th>/,'<th style="color:var(--rose);text-decoration:line-through">salary</th>')
+          .replace(/<th>id<\/th>/,'<th style="color:var(--rose);text-decoration:line-through">id</th>')},
+      {note:"Users querying <code>Directory</code> can never reach salary — it isn't in the view at all.",
+        view:()=>table({caption:"Directory (what users see)",cols:["name","dept"],
+          rows:EMP.rows.map(r=>[r[1],r[2]]), rowClass:EMP.rows.map(()=>'keep')})},
+    ];
+  }
+},
+live:{
+  title:"A view is live — it reflects base changes",
+  body:"Because a view re-runs its query every time, any change to the base table is <b>immediately visible</b> "+
+       "through the view. Insert a new engineer into Employee and <code>EngStaff</code> shows them on the very "+
+       "next read — no refresh, no copy to keep in sync.",
+  analogy:"<b>Like a window, not a photograph:</b> a photo (snapshot) freezes a moment, but a window always "+
+          "shows whatever is outside right now.",
+  fname:"live_view.sql",
+  codeIntro:"Insert into the base table, then re-query the view — the new row appears automatically.",
+  legend:[["keep","in the view"],["focus","newly inserted row"]],
+  code:`-- EngStaff defined earlier as Eng employees (name, salary)
+INSERT INTO Employee VALUES (6, 'Finn', 'Eng', 72);
+
+SELECT * FROM EngStaff;   -- Finn appears immediately, no refresh needed`,
+  build(){
+    const eng0=EMP.rows.filter(isEng);
+    return [
+      {note:"EngStaff currently shows Ben and Dee (the Eng employees).",
+        view:()=>table({caption:"EngStaff (before)",cols:["name","salary"],rows:eng0.map(r=>[r[1],r[3]]),rowClass:eng0.map(()=>'keep')})},
+      {note:"<code>INSERT INTO Employee VALUES (6,'Finn','Eng',72)</code> adds a new engineer to the <b>base</b> table.",
+        view:()=>table({caption:"Employee (base) — Finn inserted",cols:EMP.cols,
+          rows:[...EMP.rows,[6,"Finn","Eng",72]],
+          rowClass:[...EMP.rows.map(()=>''),'focus']})},
+      {note:"Re-query <code>EngStaff</code>: it re-runs its filter and Finn appears — automatically.",
+        view:()=>table({caption:"EngStaff (after) — live!",cols:["name","salary"],
+          rows:[...eng0.map(r=>[r[1],r[3]]),["Finn",72]],
+          rowClass:[...eng0.map(()=>'keep'),'focus']})},
+    ];
+  }
+},
+update:{
+  title:"Updatable views & materialized views",
+  body:"A <b>simple</b> view (one table, no aggregation/DISTINCT/joins) is usually <b>updatable</b>: an "+
+       "<code>INSERT/UPDATE/DELETE</code> on the view passes through to the base table. Views with aggregates, "+
+       "<code>GROUP BY</code>, or multiple joined tables are <b>read-only</b>. A <b>materialized view</b> is the "+
+       "exception that <i>does</i> store data — a precomputed snapshot refreshed on demand for performance.",
+  analogy:"<b>Updatable view = a clear pane you can also write on</b> (the ink reaches the page behind it). "+
+          "<b>Materialized view = a printed copy</b> — fast to read, but stale until you reprint it.",
+  fname:"updatable.sql",
+  codeIntro:"When pass-through updates work, and when a materialized snapshot is the right tool.",
+  legend:[["keep","updatable / fresh"],["drop","read-only / stale risk"]],
+  code:`-- ✓ Updatable: simple, single-table view
+CREATE VIEW SalesStaff AS
+  SELECT id, name, salary FROM Employee WHERE dept='Sales';
+UPDATE SalesStaff SET salary = salary + 5;   -- reaches Employee
+
+-- ✗ Read-only: aggregation can't be mapped back to base rows
+CREATE VIEW DeptAvg AS
+  SELECT dept, AVG(salary) AS avg_sal FROM Employee GROUP BY dept;
+
+-- Materialized view: stored snapshot, refreshed explicitly
+CREATE MATERIALIZED VIEW DeptAvgMV AS
+  SELECT dept, AVG(salary) FROM Employee GROUP BY dept;
+REFRESH MATERIALIZED VIEW DeptAvgMV;`,
+  build(){
+    return [
+      {note:"<b>Updatable:</b> SalesStaff is one table, no aggregation — updates pass through to Employee.",
+        view:()=>table({caption:"SalesStaff (updatable ✓)",cols:["id","name","salary"],
+          rows:EMP.rows.filter(r=>r[2]==='Sales').map(r=>[r[0],r[1],r[3]]),
+          rowClass:EMP.rows.filter(r=>r[2]==='Sales').map(()=>'keep')})},
+      {note:"<b>Read-only:</b> DeptAvg aggregates with GROUP BY — a result row maps to many base rows, so it can't be updated.",
+        view:()=>table({caption:"DeptAvg (read-only ✗)",cols:["dept","avg_sal"],
+          rows:[["Sales","55.0"],["Eng","85.0"],["HR","55.0"]], rowClass:["drop","drop","drop"],
+          cellClass:{'0-1':'agg','1-1':'agg','2-1':'agg'}})},
+      {note:"<b>Materialized:</b> the same aggregate, but stored as a snapshot — fast to read, refreshed on demand.",
+        view:()=>table({caption:"DeptAvgMV (snapshot — needs REFRESH)",cols:["dept","avg_sal"],
+          rows:[["Sales","55.0"],["Eng","85.0"],["HR","55.0"]], rowClass:["keep","keep","keep"],
+          cellClass:{'0-1':'agg','1-1':'agg','2-1':'agg'}})+
+          `<div style="font-family:var(--mono);font-size:.8rem;color:var(--gold);padding:.5rem 0">stored on disk · current only as of last REFRESH</div>`},
+    ];
+  }
+}
+};
+
+function viewDef(){
+  return `<div style="margin:.6rem 0; border:1px dashed var(--violet); border-radius:10px; padding:.7rem .9rem; background:rgba(167,139,250,.06)">
+    <span style="font-family:var(--mono);font-size:.72rem;color:var(--violet)">VIEW EngStaff (stored query)</span><br>
+    <span style="font-family:var(--mono);font-size:.82rem;color:var(--ink-dim)">SELECT name, salary FROM Employee WHERE dept='Eng'</span></div>`;
+}
+
+const player=new StepPlayer({
+  mount:document.getElementById("stage"), narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"), render:(s)=>s.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+const cmap={keep:"var(--emerald)",drop:"var(--rose)",focus:"var(--gold)",dim:"var(--ink-muted)",agg:"var(--blue)"};
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl"); codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>`<span><i style="background:${cmap[c]||'#888'}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("virtual");
+</script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nested Queries · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html">Aggregates</a>
+      <a href="nested-queries.html" class="active">Subqueries</a>
+      <a href="correlated.html">Correlated</a>
+      <a href="set-operations.html">Set ops</a>
+      <a href="views.html">Views</a>
+      <a href="indexing.html">Indexing</a>
+      <a href="triggers.html">Triggers</a>
+      <a href="functional-dependencies.html">FDs</a>
+      <a href="keys.html">Keys</a>
+      <a href="minimal-cover.html">Min Cover</a>
+      <a href="normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 1 · Advanced Querying</div>
+    <h1>Nested Queries — IN / NOT IN and ANY / ALL</h1>
+    <p>A nested (sub)query is a <code>SELECT</code> inside another query. A simple subquery runs <b>once</b>,
+      producing a set of values that the outer query tests against. <code>IN</code> checks membership;
+      <code>ANY</code> and <code>ALL</code> compare against the smallest or largest of that set. Watch the
+      inner query resolve first, then feed the outer filter.</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="in" class="active">IN</button>
+    <button data-lesson="notin">NOT IN</button>
+    <button data-lesson="any">> ANY</button>
+    <button data-lesson="all">> ALL</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Watch it execute</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>The SQL</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">subquery.sql</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>Operator cheat-sheet</h2>
+    <table class="tbl">
+      <thead><tr><th>Form</th><th>True when…</th><th>Equivalent to</th></tr></thead>
+      <tbody>
+        <tr><td><code>x IN (set)</code></td><td>x equals some member of the set</td><td><code>x = ANY (set)</code></td></tr>
+        <tr><td><code>x NOT IN (set)</code></td><td>x equals no member of the set</td><td><code>x &lt;&gt; ALL (set)</code></td></tr>
+        <tr><td><code>x &gt; ANY (set)</code></td><td>x is greater than <b>at least one</b> member</td><td><code>x &gt; MIN(set)</code></td></tr>
+        <tr><td><code>x &gt; ALL (set)</code></td><td>x is greater than <b>every</b> member</td><td><code>x &gt; MAX(set)</code></td></tr>
+        <tr><td><code>x &lt; ALL (set)</code></td><td>x is smaller than every member</td><td><code>x &lt; MIN(set)</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li><b><code>NOT IN</code> with NULLs is a classic trap:</b> if the subquery returns even one NULL, <code>NOT IN</code> yields no rows (everything becomes UNKNOWN).</li>
+          <li>Using <code>=</code> with a subquery that returns multiple rows — that errors; use <code>IN</code>.</li>
+          <li>Confusing <code>&gt; ANY</code> (greater than the minimum) with <code>&gt; ALL</code> (greater than the maximum).</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>A non-correlated subquery runs <b>once</b>; mentally replace it with its result set, then read the outer query.</li>
+          <li><code>= ANY</code> ≡ <code>IN</code>; <code>&lt;&gt; ALL</code> ≡ <code>NOT IN</code> — handy rewrites.</li>
+          <li>Many <code>IN</code> subqueries can be rewritten as joins, often with better performance.</li>
+          <li>Prefer <code>NOT EXISTS</code> over <code>NOT IN</code> when NULLs are possible (next module).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="aggregates.html">← Aggregates</a>
+    <a class="btn btn-primary" href="../index.html">Back to syllabus →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Nested Queries</span><span style="font-family:var(--mono)">IN · NOT IN · ANY · ALL</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+const EMP={cols:["name","dept","salary"], rows:[
+  ["Ava","Sales",50],["Ben","Eng",80],["Cy","Sales",60],
+  ["Dee","Eng",90],["Eli","HR",55],["Finn","Mktg",70]]};
+const DEPT={cols:["dept","location"], rows:[
+  ["Sales","NYC"],["Eng","NYC"],["HR","LA"],["Mktg","Austin"]]};
+const HR_SAL=[40,55,65];   // salaries in HR for ANY/ALL comparisons
+
+const LESSONS={
+in:{
+  title:"IN — membership in a value set",
+  body:"<code>WHERE dept IN (subquery)</code> keeps a row when its <code>dept</code> matches <b>any</b> value "+
+       "the subquery returns. The inner query runs first and collapses to a set of values; the outer query "+
+       "then tests each row's column against that set.",
+  analogy:"<b>Like a guest list:</b> the subquery writes the list of allowed departments; the outer query "+
+          "lets a row in only if its department is on that list.",
+  fname:"in.sql",
+  codeIntro:"Find employees whose department is located in NYC. The subquery returns {Sales, Eng}; IN tests each employee.",
+  legend:[["violet","subquery result"],["keep","row matches (IN)"],["drop","row excluded"]],
+  code:`-- Employees who work in an NYC-based department
+SELECT name, dept
+FROM   Employee
+WHERE  dept IN ( SELECT dept
+                 FROM   Dept
+                 WHERE  location = 'NYC' );`,
+  build(){
+    const steps=[];
+    steps.push({note:"Two tables: Employee (outer) and Dept (used by the subquery).",
+      view:()=>two(table({caption:"Employee",...EMP}), table({caption:"Dept",...DEPT}))});
+    steps.push({note:"Run the <b>subquery</b> first: <code>SELECT dept FROM Dept WHERE location='NYC'</code>.",
+      view:()=>two(table({caption:"Employee",...EMP}),
+        table({caption:"Dept — WHERE location='NYC'",...DEPT, rowClass:DEPT.rows.map(r=>r[1]==='NYC'?'keep':'drop')}))});
+    steps.push({note:"Subquery result set: <b>{Sales, Eng}</b>. The outer query now tests each employee's dept against this.",
+      view:()=>setBox(["Sales","Eng"])+table({caption:"Employee — WHERE dept IN {Sales, Eng}",...EMP,
+        rowClass:EMP.rows.map(r=>['Sales','Eng'].includes(r[1])?'keep':'drop')})});
+    steps.push({note:"Keep matching rows. Final result: employees in NYC departments.",
+      view:()=>table({caption:"result",cols:["name","dept"],
+        rows:EMP.rows.filter(r=>['Sales','Eng'].includes(r[1])).map(r=>[r[0],r[1]]),
+        rowClass:EMP.rows.filter(r=>['Sales','Eng'].includes(r[1])).map(()=>'keep')})});
+    return steps;
+  }
+},
+notin:{
+  title:"NOT IN — everything except the set",
+  body:"<code>NOT IN</code> keeps a row only when its value matches <b>none</b> of the subquery's results — "+
+       "the complement of <code>IN</code>. Beware: if the subquery returns a <code>NULL</code>, <code>NOT IN</code> "+
+       "can surprisingly return no rows at all.",
+  analogy:"<b>Like a banned list:</b> a row is allowed through only if its department is <i>not</i> on the list "+
+          "the subquery produced.",
+  fname:"not_in.sql",
+  codeIntro:"Employees NOT in an NYC department. Same subquery {Sales, Eng}; NOT IN keeps the rest.",
+  legend:[["violet","subquery result"],["keep","row kept (NOT IN)"],["drop","row excluded"]],
+  code:`-- Employees who do NOT work in an NYC department
+SELECT name, dept
+FROM   Employee
+WHERE  dept NOT IN ( SELECT dept
+                     FROM   Dept
+                     WHERE  location = 'NYC' );`,
+  build(){
+    const steps=[];
+    steps.push({note:"Subquery again yields the NYC departments: <b>{Sales, Eng}</b>.",
+      view:()=>setBox(["Sales","Eng"])+table({caption:"Employee",...EMP})});
+    steps.push({note:"<code>NOT IN</code> tests each row against the set — keep those <b>not</b> in it.",
+      view:()=>setBox(["Sales","Eng"])+table({caption:"Employee — WHERE dept NOT IN {Sales, Eng}",...EMP,
+        rowClass:EMP.rows.map(r=>['Sales','Eng'].includes(r[1])?'drop':'keep')})});
+    steps.push({note:"Result: HR and Mktg employees — the complement of the IN result.",
+      view:()=>table({caption:"result",cols:["name","dept"],
+        rows:EMP.rows.filter(r=>!['Sales','Eng'].includes(r[1])).map(r=>[r[0],r[1]]),
+        rowClass:EMP.rows.filter(r=>!['Sales','Eng'].includes(r[1])).map(()=>'keep')})});
+    steps.push({note:"⚠️ If the subquery had returned a NULL, NOT IN would have yielded <b>zero</b> rows — a famous gotcha.",
+      view:()=>setBox(["Sales","Eng","NULL"])+`<div style="font-family:var(--mono);font-size:.82rem;color:var(--rose);padding:.6rem 0">dept NOT IN {…, NULL} → UNKNOWN for every row → no results.</div>`});
+    return steps;
+  }
+},
+any:{
+  title:"> ANY — beat at least one",
+  body:"<code>x &gt; ANY (set)</code> is true when <code>x</code> exceeds <b>at least one</b> value in the set — "+
+       "equivalently, when <code>x</code> is greater than the set's <b>minimum</b>. It's a loose comparison: "+
+       "clearing the lowest bar is enough.",
+  analogy:"<b>Like qualifying for a race by beating the slowest runner:</b> you don't have to beat everyone, "+
+          "just one person.",
+  fname:"any.sql",
+  codeIntro:"Employees earning more than ANY HR salary. HR = {40, 55, 65}; > ANY means > 40 (the minimum).",
+  legend:[["violet","subquery values"],["keep","x > min ✓"],["drop","x ≤ min ✗"]],
+  code:`-- Employees earning more than at least one HR employee
+SELECT name, salary
+FROM   Employee
+WHERE  salary > ANY ( SELECT salary
+                      FROM   Employee
+                      WHERE  dept = 'HR' );`,
+  build(){
+    const steps=[];
+    steps.push({note:"Subquery: HR salaries = <b>{40, 55, 65}</b>. Its minimum is 40.",
+      view:()=>setBox(["40","55","65"])});
+    steps.push({note:"<code>&gt; ANY {40,55,65}</code> is true when salary &gt; the minimum (40).",
+      view:()=>setBox(["40","55","65"])+`<div style="font-family:var(--mono);font-size:.84rem;color:var(--blue);padding:.5rem 0">salary &gt; ANY ≡ salary &gt; MIN = 40</div>`});
+    steps.push({note:"Test each employee's salary against 40.",
+      view:()=>table({caption:"Employee — WHERE salary > 40",cols:["name","salary"],
+        rows:EMP.rows.map(r=>[r[0],r[2]]), rowClass:EMP.rows.map(r=>r[2]>40?'keep':'drop')})});
+    steps.push({note:"Everyone over 40 qualifies. (Only someone earning ≤ 40 would be excluded.)",
+      view:()=>table({caption:"result",cols:["name","salary"],
+        rows:EMP.rows.filter(r=>r[2]>40).map(r=>[r[0],r[2]]),
+        rowClass:EMP.rows.filter(r=>r[2]>40).map(()=>'keep')})});
+    return steps;
+  }
+},
+all:{
+  title:"> ALL — beat every one",
+  body:"<code>x &gt; ALL (set)</code> is true only when <code>x</code> exceeds <b>every</b> value — "+
+       "equivalently, when <code>x</code> is greater than the set's <b>maximum</b>. It's the strict "+
+       "comparison: you must clear the highest bar.",
+  analogy:"<b>Like setting a new record:</b> beating the slowest runner isn't enough — you must beat the "+
+          "fastest one too.",
+  fname:"all.sql",
+  codeIntro:"Employees earning more than ALL HR salaries. HR = {40, 55, 65}; > ALL means > 65 (the maximum).",
+  legend:[["violet","subquery values"],["keep","x > max ✓"],["drop","x ≤ max ✗"]],
+  code:`-- Employees earning more than every HR employee
+SELECT name, salary
+FROM   Employee
+WHERE  salary > ALL ( SELECT salary
+                      FROM   Employee
+                      WHERE  dept = 'HR' );`,
+  build(){
+    const steps=[];
+    steps.push({note:"Same HR set = <b>{40, 55, 65}</b>, but now its maximum (65) is the bar.",
+      view:()=>setBox(["40","55","65"])});
+    steps.push({note:"<code>&gt; ALL {40,55,65}</code> is true only when salary &gt; the maximum (65).",
+      view:()=>setBox(["40","55","65"])+`<div style="font-family:var(--mono);font-size:.84rem;color:var(--blue);padding:.5rem 0">salary &gt; ALL ≡ salary &gt; MAX = 65</div>`});
+    steps.push({note:"Test each salary against 65 — a much stricter bar than ANY.",
+      view:()=>table({caption:"Employee — WHERE salary > 65",cols:["name","salary"],
+        rows:EMP.rows.map(r=>[r[0],r[2]]), rowClass:EMP.rows.map(r=>r[2]>65?'keep':'drop')})});
+    steps.push({note:"Only employees above 65 survive — far fewer than with > ANY.",
+      view:()=>table({caption:"result",cols:["name","salary"],
+        rows:EMP.rows.filter(r=>r[2]>65).map(r=>[r[0],r[2]]),
+        rowClass:EMP.rows.filter(r=>r[2]>65).map(()=>'keep')})});
+    return steps;
+  }
+}
+};
+
+/* ---- render helpers ---- */
+function two(a,b){ return `<div class="tbl-flow">${a}<div class="flow-arrow">⋈</div>${b}</div>`; }
+function setBox(vals){
+  return `<div style="margin-bottom:.8rem"><span style="font-family:var(--mono);font-size:.72rem;color:var(--ink-muted)">subquery result set</span><br>`+
+    vals.map(v=>`<span class="grouplabel" style="background:rgba(167,139,250,.15);color:var(--violet);border:1px solid rgba(167,139,250,.3);margin-right:.4rem">${v}</span>`).join('')+
+    `</div>`;
+}
+
+const player=new StepPlayer({
+  mount:document.getElementById("stage"),
+  narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"),
+  render:(step)=> step.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+const cmap={violet:"var(--violet)",keep:"var(--emerald)",drop:"var(--rose)",focus:"var(--gold)"};
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl");
+  codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>
+    `<span><i style="background:${cmap[c]||'#888'}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("in");
+</script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keys from FDs · SQL Lab</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../favicon.svg">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html"><span class="glyph">SQL</span><span>SQL&nbsp;Lab<small>Databases · Visual Course</small></span></a>
+    <a class="backhome" href="../index.html">← Back to syllabus</a>
+    <nav class="nav-links">
+      <a href="aggregates.html">Aggregates</a>
+      <a href="nested-queries.html">Subqueries</a>
+      <a href="correlated.html">Correlated</a>
+      <a href="set-operations.html">Set ops</a>
+      <a href="views.html">Views</a>
+      <a href="indexing.html">Indexing</a>
+      <a href="triggers.html">Triggers</a>
+      <a href="functional-dependencies.html">FDs</a>
+      <a href="keys.html" class="active">Keys</a>
+      <a href="minimal-cover.html">Min Cover</a>
+      <a href="normalization.html">Normalization</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="mod-head">
+    <div class="eyebrow">Part 3 · Design Theory</div>
+    <h1>Finding Keys from Functional Dependencies</h1>
+    <p>A <b>superkey</b> is any attribute set whose closure is the whole relation. A <b>candidate key</b> is a
+      <i>minimal</i> superkey — drop any attribute and it stops determining everything. We'll classify attributes
+      by where they appear in the FDs to shrink the search, then compute closures to pin down every candidate
+      key, and finally label attributes <b>prime</b> or <b>non-prime</b> — the vocabulary normalization needs.</p>
+  </section>
+
+  <div class="lessonbar" id="lessonbar">
+    <button data-lesson="super" class="active">Superkey vs candidate</button>
+    <button data-lesson="classify">Classify attributes</button>
+    <button data-lesson="find">Find candidate keys</button>
+    <button data-lesson="prime">Prime vs non-prime</button>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">1</span><span id="cTitle"></span></h2>
+    <p id="cBody"></p>
+    <div class="analogy" id="cAnalogy"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">2</span>Work it through</h2>
+    <div class="viz">
+      <div class="viz-stage" id="stage"></div>
+      <div class="viz-side">
+        <h4>Step-by-step</h4>
+        <div class="narration" id="narration"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">3</span>Our working example</h2>
+    <p style="color:var(--ink-muted); font-size:.9rem" id="codeIntro"></p>
+    <div class="codeblock">
+      <div class="cbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="fname" id="fname">relation.txt</span><button class="copy">copy</button></div>
+      <pre><code class="sql" id="codeEl"></code></pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">4</span>Key vocabulary</h2>
+    <table class="tbl">
+      <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+      <tbody>
+        <tr><td>Superkey</td><td>attribute set X with <code>X⁺</code> = all attributes of R</td></tr>
+        <tr><td>Candidate key</td><td>a <b>minimal</b> superkey (no proper subset is a superkey)</td></tr>
+        <tr><td>Primary key</td><td>one candidate key chosen by the designer</td></tr>
+        <tr><td>Prime attribute</td><td>an attribute that belongs to <b>some</b> candidate key</td></tr>
+        <tr><td>Non-prime attribute</td><td>an attribute in <b>no</b> candidate key</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2><span class="num">5</span>Pitfalls &amp; exam tips</h2>
+    <div class="tips">
+      <div class="tipcard warn"><h4>⚠️ Common mistakes</h4>
+        <ul>
+          <li>Calling any superkey a candidate key — candidate keys must be <b>minimal</b>.</li>
+          <li>Forgetting a relation can have <b>several</b> candidate keys (e.g. both <code>C</code> and <code>AB</code> here).</li>
+          <li>Missing that attributes appearing on <b>no</b> right-hand side must be in <i>every</i> candidate key.</li>
+          <li>Assuming one attribute is enough — always verify with the closure that it determines all of R.</li>
+        </ul>
+      </div>
+      <div class="tipcard pro"><h4>💡 Exam tips</h4>
+        <ul>
+          <li>Attributes that never appear on a right side are <b>essential</b> — in every key. Right-only attributes are in <b>no</b> key.</li>
+          <li>Start the search from the essential set; add "both-side" attributes until the closure covers R.</li>
+          <li>Check minimality: remove each attribute and confirm the closure is no longer everything.</li>
+          <li>Prime/non-prime is decided <b>after</b> you know all candidate keys — it drives 2NF and 3NF.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; margin:1rem 0 3rem">
+    <a class="btn btn-ghost" href="functional-dependencies.html">← Functional Dependencies</a>
+    <a class="btn btn-primary" href="minimal-cover.html">Next: Minimal Cover →</a>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>SQL Lab · Keys from FDs</span><span style="font-family:var(--mono)">superkey · candidate · prime</span></div></footer>
+
+<script src="../js/common.js"></script>
+<script>
+/* R(A,B,C,D,E),  F = { AB→C, C→AB, C→D, D→E }   → candidate keys {C} and {AB} */
+const ALL=["A","B","C","D","E"];
+const F=[
+  {lhs:["A","B"],rhs:["C"],label:"AB → C"},
+  {lhs:["C"],rhs:["A","B"],label:"C → AB"},
+  {lhs:["C"],rhs:["D"],label:"C → D"},
+  {lhs:["D"],rhs:["E"],label:"D → E"}
+];
+function closure(X){ const cl=new Set(X); let ch=true;
+  while(ch){ ch=false; for(const {lhs,rhs} of F){ if(lhs.every(a=>cl.has(a))&&!rhs.every(a=>cl.has(a))){ rhs.forEach(a=>cl.add(a)); ch=true; } } }
+  return [...cl];
+}
+const isSuper=X=>closure(X).length===ALL.length;
+function candidateKeys(){
+  const subs=[];
+  for(let m=1;m<(1<<ALL.length);m++){ const s=[]; for(let i=0;i<ALL.length;i++) if(m&(1<<i)) s.push(ALL[i]); subs.push(s); }
+  subs.sort((a,b)=>a.length-b.length);
+  const cks=[];
+  for(const s of subs){ if(isSuper(s) && !cks.some(ck=>ck.every(a=>s.includes(a)))) cks.push(s); }
+  return cks;
+}
+const CKS=candidateKeys();                 // [['C'],['A','B']]
+const PRIME=[...new Set(CKS.flat())].sort();// A,B,C
+const NONPRIME=ALL.filter(a=>!PRIME.includes(a)); // D,E
+
+/* attribute side classification */
+function classify(){
+  const leftAll=new Set(F.flatMap(f=>f.lhs)), rightAll=new Set(F.flatMap(f=>f.rhs));
+  const cls={};
+  ALL.forEach(a=>{
+    const l=leftAll.has(a), r=rightAll.has(a);
+    cls[a]= (!l&&!r)?'neither' : (l&&!r)?'leftonly' : (!l&&r)?'rightonly' : 'both';
+  });
+  return cls;
+}
+
+/* ---- render ---- */
+function pills(setHi, kindMap){
+  return `<div style="display:flex;gap:.4rem;flex-wrap:wrap">`+ALL.map(a=>{
+    const k=(kindMap&&kindMap[a])|| (setHi&&setHi.includes(a)?'in':'idle');
+    const col={in:['var(--emerald)','rgba(52,211,153,.14)','var(--ink)'],
+      key:['var(--emerald)','rgba(52,211,153,.18)','var(--ink)'],
+      excl:['var(--rose)','rgba(251,113,133,.12)','var(--ink)'],
+      must:['var(--gold)','rgba(251,191,36,.15)','var(--ink)'],
+      test:['var(--blue)','rgba(96,165,250,.12)','var(--ink)'],
+      idle:['var(--border)','transparent','var(--ink-muted)']}[k]||['var(--border)','transparent','var(--ink-muted)'];
+    const op=k==='idle'?'opacity:.5;':'';
+    return `<div style="${op}min-width:36px;text-align:center;padding:.4rem .55rem;border:1px solid ${col[0]};background:${col[1]};color:${col[2]};border-radius:8px;font-family:var(--mono);font-weight:700">${a}</div>`;
+  }).join('')+`</div>`;
+}
+function fdList(){
+  return `<div style="display:flex;flex-direction:column;gap:.3rem">`+F.map(f=>
+    `<div style="padding:.35rem .7rem;border:1px solid var(--border);background:var(--surface-2);border-radius:8px;font-family:var(--mono);font-size:.82rem;color:var(--ink-dim)">${f.label}</div>`).join('')+`</div>`;
+}
+function closureLine(X){ return `<div style="font-family:var(--mono);font-size:.84rem;color:var(--ink-dim);margin:.5rem 0">${X.join('')}⁺ = {${closure(X).join(', ')}}</div>`; }
+function verdict(text,ok){ return `<div style="font-family:var(--mono);font-size:.86rem;color:${ok?'var(--emerald)':'var(--rose)'};padding:.3rem 0">${text}</div>`; }
+
+const LESSONS={
+super:{
+  title:"Superkey vs candidate key",
+  body:"A <b>superkey</b> determines every attribute: <code>X⁺ = R</code>. A <b>candidate key</b> is a superkey "+
+       "with nothing to spare — remove any attribute and it's no longer a superkey. Every candidate key is a "+
+       "superkey, but most superkeys are not candidate keys (they carry extra baggage).",
+  analogy:"<b>Superkey = any keychain that opens every door; candidate key = the smallest such keychain</b> with "+
+          "no redundant keys on it.",
+  fname:"superkey.txt",
+  codeIntro:"R(A,B,C,D,E) with F = {AB→C, C→AB, C→D, D→E}. We test attribute sets with the closure.",
+  legend:[["#34D399","superkey / candidate"],["#60A5FA","being tested"],["#FB7185","not minimal"]],
+  code:`R = (A, B, C, D, E)
+F = { AB -> C ,  C -> AB ,  C -> D ,  D -> E }
+
+superkey:        X such that  X+ = {A,B,C,D,E}
+candidate key:   minimal superkey (no smaller subset works)`,
+  build(){
+    return [
+      {note:"Test <b>C</b>: compute C⁺.",
+        view:()=>pills(['C'],{C:'test'})+closureLine(['C'])},
+      {note:"C⁺ = all attributes → <b>C is a superkey</b>. It's a single attribute, so it's also minimal → candidate key.",
+        view:()=>pills(closure(['C']),{C:'key'})+closureLine(['C'])+verdict("C⁺ = R  ⟹  C is a candidate key ✓",true)},
+      {note:"Now test <b>ABC</b>: it's also a superkey (it contains C)…",
+        view:()=>pills(closure(['A','B','C']),{A:'test',B:'test',C:'test'})+closureLine(['A','B','C'])},
+      {note:"…but ABC is <b>not minimal</b> — C alone already works, so the extra A and B are baggage. Superkey, not a candidate key.",
+        view:()=>pills(closure(['A','B','C']),{A:'excl',B:'excl',C:'key'})+verdict("ABC is a superkey but NOT minimal ✗",false)}
+    ];
+  }
+},
+classify:{
+  title:"Classify attributes to shrink the search",
+  body:"Before brute-forcing subsets, classify each attribute by where it appears in F. An attribute on <b>no "+
+       "right-hand side</b> can never be produced by an FD, so it must be in <b>every</b> candidate key. An "+
+       "attribute on <b>no left-hand side</b> (right-only) is in <b>no</b> candidate key. The rest ('both') are "+
+       "where the real search happens.",
+  analogy:"<b>Like sorting suspects:</b> some are definitely in (essential), some definitely out, and the rest "+
+          "need investigating.",
+  fname:"classify.txt",
+  codeIntro:"Each attribute is left-only, right-only, both, or neither. That tells us who must / can't be in a key.",
+  legend:[["#FBBF24","must be in every key"],["#FB7185","in no key"],["#60A5FA","needs testing"]],
+  code:`For each attribute, where does it appear?
+  left-only / neither  ->  in EVERY candidate key (essential)
+  right-only           ->  in NO candidate key
+  both sides           ->  maybe — test with closures`,
+  build(){
+    const cls=classify();
+    return [
+      {note:"Our FDs again. We'll tag each attribute by the sides it appears on.",
+        view:()=>fdList()},
+      {note:"<b>E</b> appears only on a right-hand side (D→E) — it can never be in a candidate key.",
+        view:()=>pills(null,{E:'excl'})+verdict("E is right-only ⟹ non-prime, in no key ✗",false)},
+      {note:"<b>A, B, C, D</b> all appear on both sides here (the C↔AB cycle), so each must be tested by closure.",
+        view:()=>pills(null,{A:'test',B:'test',C:'test',D:'test',E:'excl'})},
+      {note:"So: E is excluded immediately; the search for keys ranges over {A, B, C, D}.",
+        view:()=>pills(null,{A:'test',B:'test',C:'test',D:'test',E:'excl'})+
+          `<div style="font-family:var(--mono);font-size:.82rem;color:var(--ink-muted);padding:.3rem 0">candidates drawn from {A,B,C,D};  E ruled out</div>`}
+    ];
+  }
+},
+find:{
+  title:"Find every candidate key",
+  body:"Search minimal superkeys: test small attribute sets first, keep a set only if its closure is all of R and "+
+       "no smaller set already qualifies. For our relation this yields <b>two</b> candidate keys — the single "+
+       "attribute <code>C</code> and the pair <code>AB</code> — because the cycle <code>AB ↔ C</code> makes them "+
+       "interchangeable determinants.",
+  analogy:"<b>Two different master keys</b> that each open every door: you only need one, but both qualify.",
+  fname:"find_keys.txt",
+  codeIntro:"Testing singles then pairs. Closures decide who is a minimal superkey.",
+  legend:[["#34D399","candidate key"],["#60A5FA","being tested"],["#FB7185","not a superkey"]],
+  code:`Test singles:   A+,B+,D+ ≠ R    C+ = R  -> C is a candidate key
+Test pairs:     AB+ = R          -> AB is a candidate key
+Result:         candidate keys = { C , AB }`,
+  build(){
+    return [
+      {note:"Test single attributes. A⁺, B⁺, D⁺ each fall short of R.",
+        view:()=>closureLine(['A'])+closureLine(['B'])+closureLine(['D'])+verdict("none of A, B, D alone is a superkey ✗",false)},
+      {note:"Test <b>C</b> alone: C⁺ = R → C is a minimal superkey → <b>candidate key #1</b>.",
+        view:()=>pills(closure(['C']),{C:'key'})+closureLine(['C'])+verdict("C is candidate key #1 ✓",true)},
+      {note:"Now pairs from {A,B,D}. Test <b>AB</b>: AB⁺ = R, and neither A nor B alone works → minimal.",
+        view:()=>pills(closure(['A','B']),{A:'key',B:'key'})+closureLine(['A','B'])+verdict("AB is candidate key #2 ✓",true)},
+      {note:`Final answer: candidate keys = { ${CKS.map(k=>k.join('')).join(' , ')} }. A relation can have more than one.`,
+        view:()=>`<div style="display:flex;gap:1rem;flex-wrap:wrap">
+          <div>${pills(['C'],{C:'key'})}<div style="text-align:center;font-family:var(--mono);font-size:.72rem;color:var(--emerald);margin-top:.3rem">key 1: C</div></div>
+          <div>${pills(['A','B'],{A:'key',B:'key'})}<div style="text-align:center;font-family:var(--mono);font-size:.72rem;color:var(--emerald);margin-top:.3rem">key 2: AB</div></div></div>`}
+    ];
+  }
+},
+prime:{
+  title:"Prime vs non-prime attributes",
+  body:"Once every candidate key is known, labelling attributes is easy. A <b>prime</b> attribute appears in at "+
+       "least one candidate key; a <b>non-prime</b> attribute appears in none. With candidate keys {C} and {AB}, "+
+       "the prime attributes are A, B, C and the non-prime ones are D, E. This split is exactly what 2NF and 3NF "+
+       "are defined in terms of.",
+  analogy:"<b>Prime = a player named in some starting line-up; non-prime = always on the bench.</b>",
+  fname:"prime.txt",
+  codeIntro:"Union the candidate keys to get the prime attributes; everything else is non-prime.",
+  legend:[["#34D399","prime"],["#FB7185","non-prime"]],
+  code:`candidate keys = { C , AB }
+prime     = C ∪ A ∪ B          = { A, B, C }
+non-prime = all − prime        = { D, E }`,
+  build(){
+    const km={}; PRIME.forEach(a=>km[a]='key'); NONPRIME.forEach(a=>km[a]='excl');
+    return [
+      {note:`The candidate keys are { ${CKS.map(k=>k.join('')).join(' , ')} }. Their union is the set of prime attributes.`,
+        view:()=>pills(null,Object.fromEntries(PRIME.map(a=>[a,'key'])))},
+      {note:`<b>Prime</b> attributes (in some candidate key): ${PRIME.join(', ')}.`,
+        view:()=>pills(null,Object.fromEntries(PRIME.map(a=>[a,'key'])))+verdict("prime = { "+PRIME.join(', ')+" }",true)},
+      {note:`<b>Non-prime</b> attributes (in no candidate key): ${NONPRIME.join(', ')}. These are what normalization scrutinises.`,
+        view:()=>pills(null,km)+verdict("non-prime = { "+NONPRIME.join(', ')+" }",false)}
+    ];
+  }
+}
+};
+
+const player=new StepPlayer({
+  mount:document.getElementById("stage"), narration:document.getElementById("narration"),
+  controls:document.getElementById("controls"), render:(s)=>s.view()
+});
+let current;
+const cTitle=document.getElementById("cTitle"),cBody=document.getElementById("cBody"),
+      cAnalogy=document.getElementById("cAnalogy"),fname=document.getElementById("fname"),
+      codeIntro=document.getElementById("codeIntro");
+function load(key){
+  current=LESSONS[key];
+  cTitle.textContent=current.title; cBody.innerHTML=current.body; cAnalogy.innerHTML=current.analogy;
+  fname.textContent=current.fname; codeIntro.textContent=current.codeIntro;
+  const codeEl=document.getElementById("codeEl"); codeEl.dataset.raw=current.code; codeEl.innerHTML=highlightSQL(current.code);
+  document.getElementById("legend").innerHTML=(current.legend||[]).map(([c,l])=>`<span><i style="background:${c}"></i>${l}</span>`).join("");
+  player.load(current.build());
+}
+document.querySelectorAll("#lessonbar button").forEach(b=> b.onclick=()=>{
+  document.querySelectorAll("#lessonbar button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); load(b.dataset.lesson);
+});
+load("super");
+</script>
+</body>
+</html>
